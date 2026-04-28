@@ -921,16 +921,39 @@ async function uploadPDFAula() {
   toast('Enviando...', '');
   try {
     const path = `pdfs/${grupo}/aula_${num}.pdf`;
-    // Deletar PDF antigo se existir
-    await fetch(`${URL}/storage/v1/object/materiais/${path}`, {
-      method:'DELETE', headers:{'apikey':KEY,'Authorization':'Bearer '+KEY}
-    }).catch(()=>{});
-    // Upload novo
-    const up = await fetch(`${URL}/storage/v1/object/materiais/${path}`, {
-      method:'POST', headers:{'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/pdf'}, body:file
+
+    // Tenta upsert (substitui se já existir)
+    let up = await fetch(`${URL}/storage/v1/object/materiais/${path}`, {
+      method:'POST',
+      headers:{
+        'apikey':KEY,
+        'Authorization':'Bearer '+KEY,
+        'Content-Type':'application/pdf',
+        'x-upsert':'true'
+      },
+      body:file
     });
-    if (!up.ok) throw new Error('Erro no upload');
+
+    // Se POST falhar mesmo com upsert, tenta PUT
+    if (!up.ok) {
+      up = await fetch(`${URL}/storage/v1/object/materiais/${path}`, {
+        method:'PUT',
+        headers:{
+          'apikey':KEY,
+          'Authorization':'Bearer '+KEY,
+          'Content-Type':'application/pdf'
+        },
+        body:file
+      });
+    }
+
+    if (!up.ok) {
+      const errBody = await up.text().catch(()=>'');
+      throw new Error('Falha no upload: ' + (errBody || up.status));
+    }
+
     const arquivo_url = `${URL}/storage/v1/object/public/materiais/${path}`;
+
     // Salvar ou atualizar registro na tabela
     const existing = await api('pdfs_aula','GET',null,`grupo=eq.${grupo}&numero_aula=eq.${num}`);
     if (existing.length) {
@@ -938,7 +961,7 @@ async function uploadPDFAula() {
     } else {
       await api('pdfs_aula','POST',{grupo, numero_aula:num, arquivo_url, nome:`Aula ${num}`});
     }
-    toast('PDF enviado!', 'success');
+    toast('PDF enviado com sucesso!', 'success');
     carregarPDFAula(grupo, num);
   } catch(e) { toast('Erro: '+e.message, 'error'); }
 }
@@ -996,13 +1019,13 @@ function openAulaDetalheNova() {
 // ── TUTORIA ────────────────────────────────────────────
 // ── TUTORIA — SISTEMA COMPLETO ──────────────────────────
 const ALUNOS = [
-  {nome:'Guilherme Neves',turma:'1ºD'},{nome:'Pedro Antonio',turma:'2ºA'},{nome:'Gabrielle Vitória',turma:'2ºA'},
-  {nome:'Davidson Rodrigues',turma:'1ºB'},{nome:'Nicolas Pereira',turma:'1ºB'},{nome:'Gerlandier Areia',turma:'1ºE'},
+  {nome:'Guilherme Nieves',turma:'1ºD'},{nome:'Pedro Antonio',turma:'2ºA'},{nome:'Gabrielle Vitória',turma:'2ºA'},
+  {nome:'Davidson Rodrigues',turma:'1ºB'},{nome:'Nicolas Pereira',turma:'1ºB'},{nome:'Gerlandier',turma:'1ºE'},
   {nome:'Iasmin Martins',turma:'2ºA'},{nome:'Julia Rocha',turma:'2ºE'},{nome:'Maria Eduarda Souza',turma:'2ºA'},
   {nome:'Laura Maria',turma:'2ºA'},{nome:'Rossy Gabriela',turma:'1ºA'},{nome:'Ana Luiza Rodrigues',turma:'2ºA'},
   {nome:'Nicolas Tavares',turma:'1ºA'},{nome:'Matheus Santana',turma:'2ºC'},{nome:'Nycolas Cordeiro',turma:'1ºC'},
   {nome:'João Pedro',turma:'1ºD'},{nome:'João Paulo',turma:'1ºD'},{nome:'Sofia Torres',turma:'2ºF'},
-  {nome:'Giovanna Rente',turma:'2ºA'},{nome:'Matheus Assunção',turma:'1ºA'},{nome:'Thabata',turma:'2ºD'},
+  {nome:'Giovanna Rente',turma:'2ºA'},{nome:'Mateus Assunção',turma:'1ºA'},{nome:'Thabata',turma:'2ºD'},
   {nome:'Julia Bigas',turma:'2ºD'},{nome:'Gabriel Albuquerque',turma:'2ºB'},{nome:'Julia Vieira',turma:'2ºB'},
   {nome:'José Victor',turma:'2ºE'}
 ];

@@ -351,8 +351,8 @@ document.head.appendChild(link);
   </div>
 
   <!-- AULAS -->
-  <div class="page" id="page-Aulas">
-    <div id="Aulas-view-horario">
+  <div class="page" id="page-aulas">
+    <div id="aulas-view-horario">
       <div class="section-title" style="margin-bottom:10px">Grade Horária</div>
       <div class="card" style="margin-bottom:12px">
         <div class="card-title">Semana Atual</div>
@@ -370,7 +370,7 @@ document.head.appendChild(link);
         <div class="turma-grid" id="turmas-2ano"></div>
       </div>
     </div>
-    <div id="Aulas-view-turma" style="display:none">
+    <div id="aulas-view-turma" style="display:none">
       <div class="back-row" onclick="voltarTurmas()">
         <div class="back-btn">←</div>
         <div class="back-title" id="turma-titulo">Turma</div>
@@ -382,7 +382,7 @@ document.head.appendChild(link);
         </div>
         <div class="progress-bar"><div class="progress-fill" id="turma-prog-fill" style="width:0%;background:linear-gradient(90deg,var(--green),var(--neon))"></div></div>
       </div>
-      <div id="Aulas-list-turma"></div>
+      <div id="aulas-list-turma"></div>
     </div>
   </div>
 
@@ -506,7 +506,7 @@ document.head.appendChild(link);
   <div style="background:var(--bg2);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0;">
     <div onclick="felarTelaAula()" style="width:34px;height:34px;border:1px solid var(--border2);border-radius:8px;display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:18px;">←</div>
     <div style="flex:1">
-      <div style="font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;color:var(--neon)" id="ta-titulo">Aula_1</div>
+      <div style="font-family:'Orbitron',sans-serif;font-size:13px;font-weight:700;color:var(--neon)" id="ta-titulo">Aula 1</div>
       <div style="font-size:11px;color:var(--text3)" id="ta-turma">Turma</div>
     </div>
     <div id="ta-status-badge" class="badge cyan">Pendente</div>
@@ -607,12 +607,13 @@ document.head.appendChild(link);
 </div>
 
 <script>
-// ── CONFIG FIXO ────────────────────────────────────────
+// ── CONFIG ─────────────────────────────────────────────
 const SUPABASE_URL = 'https://ddtoferhisbnmxhitoff.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkdG9mZXJoaXNibm14aGl0b2ZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4Njc5ODYsImV4cCI6MjA5MjQ0Mzk4Nn0.BSbHnFxN25IHDl3EEAAdHQS-7yCL0XNvoVsgtc1jw94';
-const GITHUB_BASE = 'https://zandrafir.github.io/paac-gestao';
-let URL = SUPABASE_URL;
-let KEY = SUPABASE_KEY;
+const GITHUB_BASE  = 'https://zandrafir.github.io/paac-gestao';
+let URL  = SUPABASE_URL;
+let KEY  = SUPABASE_KEY;
+let USER_TOKEN = null;
 let NAME = '';
 let curPage='home', curStatus='pendente';
 let curTurma=null, curAulaId=null;
@@ -634,16 +635,14 @@ const TURMAS_1 = ['1ºA','1ºB','1ºC','1ºD','1ºE'];
 const TURMAS_2 = ['2ºA','2ºB','2ºC','2ºD','2ºE','2ºF'];
 const TOTAL_AULAS = 14;
 
-// ── AUTH ───────────────────────────────────────────────
+// ── AUTH ──────────────────────────────────────────────
 async function fazerLogin(){
   const email = document.getElementById('login-email').value.trim();
   const senha = document.getElementById('login-senha').value;
   const erroEl = document.getElementById('login-erro');
   const btn = document.getElementById('btn-login');
   if(!email||!senha){erroEl.textContent='Preencha e-mail e senha.';return;}
-  erroEl.textContent='';
-  btn.textContent='Aguarde...';
-  btn.disabled=true;
+  erroEl.textContent=''; btn.textContent='Aguarde...'; btn.disabled=true;
   try{
     const res = await fetch(`${SUPABASE_URL}/auth/v1/token?grant_type=password`,{
       method:'POST',
@@ -651,17 +650,15 @@ async function fazerLogin(){
       body:JSON.stringify({email,password:senha})
     });
     const data = await res.json();
-    if(!res.ok) throw new Error(data.error_description||data.msg||'Erro ao fazer login');
+    if(!res.ok) throw new Error(data.error_description||'Credenciais inválidas');
     const nome = data.user?.user_metadata?.name || data.user?.email?.split('@')[0] || 'Professor';
-    // Salvar sessão
     localStorage.setItem('paac_token', data.access_token);
     localStorage.setItem('paac_refresh', data.refresh_token);
     localStorage.setItem('paac_nome', nome);
     boot(nome, data.access_token);
   }catch(e){
     erroEl.textContent = e.message==='Invalid login credentials'?'E-mail ou senha incorretos.':e.message;
-    btn.textContent='▶ ENTRAR';
-    btn.disabled=false;
+    btn.textContent='▶ ENTRAR'; btn.disabled=false;
   }
 }
 
@@ -678,14 +675,13 @@ async function refreshSession(){
     if(!res.ok) return false;
     localStorage.setItem('paac_token', data.access_token);
     localStorage.setItem('paac_refresh', data.refresh_token);
-    KEY = data.access_token;
+    USER_TOKEN = data.access_token; KEY = data.access_token;
     return true;
   }catch(e){return false;}
 }
 
 function boot(nome, token){
-  NAME = nome;
-  KEY = token || SUPABASE_KEY;
+  NAME = nome; USER_TOKEN = token; KEY = token || SUPABASE_KEY;
   const greeting = nome.startsWith('Prof')?nome:`Profº ${nome}`;
   document.getElementById('welcome-name').textContent=greeting;
   document.getElementById('user-avatar').textContent=nome.split(' ').pop()[0]||nome[0];
@@ -712,7 +708,7 @@ async function api(table,method='GET',body=null,filter=''){
   if(filter) params.push(filter);
   if(method==='GET') params.push('order=created_at.desc');
   if(params.length) url+='?'+params.join('&');
-  const h={'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json'};
+  const h={'apikey':SUPABASE_KEY,'Authorization':'Bearer '+(USER_TOKEN||KEY),'Content-Type':'application/json'};
   if(method==='POST') h['Prefer']='return=representation';
   const r=await fetch(url,{method,headers:h,body:body?JSON.stringify(body):null});
   if(!r.ok){const e=await r.text();throw new Error(e);}
@@ -924,11 +920,9 @@ async function carregarPDFAula(grupo, num) {
   const pdfInfo = document.getElementById('ta-pdf-info');
   pdfArea.innerHTML = '<div class="loading"><div class="spinner"></div>Buscando PDF...</div>';
 
-  // PDFs hospedados no GitHub Pages
-  // 1º ano → pasta "2º bimestre" | 2º ano → pasta "Aulas Revisadas"
   const pasta = grupo === '1ano' ? '2%C2%BA%20bimestre' : 'Aulas%20Revisadas';
-  const url = `${GITHUB_BASE}/${pasta}/Aula_${string(num).padStart(2,'0')}.pdf`;
-
+  const numStr = String(num).padStart(2, '0');
+  const url = `${GITHUB_BASE}/${pasta}/Aula_${numStr}.pdf`;
   try {
     const check = await fetch(url, { method: 'HEAD' });
     if (check.ok) {
@@ -943,18 +937,13 @@ async function carregarPDFAula(grupo, num) {
       pdfArea.innerHTML = `
         <div style="text-align:center;color:var(--text3);padding:30px">
           <div style="font-size:48px;margin-bottom:12px">📄</div>
-          <div style="font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:1px">PDF não encontrado</div>
-          <div style="font-size:11px;margin-top:8px;line-height:1.7">
-            Certifique-se de que <span style="color:var(--neon)">aula_${num}.pdf</span><br>
-            está na pasta <span style="color:var(--neon)">${grupo==='1ano'?'2º bimestre':'Aulas Revisadas'}</span> do GitHub.
-          </div>
+          <div style="font-family:'Orbitron',sans-serif;font-size:12px">PDF não encontrado</div>
+          <div style="font-size:11px;margin-top:8px;line-height:1.7">Verifique se <span style="color:var(--neon)">Aula_${numStr}.pdf</span> está na pasta <span style="color:var(--neon)">${grupo==='1ano'?'2º bimestre':'Aulas Revisadas'}</span> do GitHub.</div>
           <a href="${url}" target="_blank" style="display:inline-block;margin-top:14px;color:var(--neon);font-size:11px;font-family:'Orbitron',sans-serif">↗ TENTAR MESMO ASSIM</a>
         </div>`;
-      pdfInfo.innerHTML = '';
-      uploadForm.innerHTML = '';
+      pdfInfo.innerHTML = ''; uploadForm.innerHTML = '';
     }
   } catch(e) {
-    // HEAD bloqueado por CORS — carrega no iframe direto
     pdfArea.innerHTML = `
       <div style="width:100%;height:70vh;border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border2)">
         <iframe src="${url}" style="width:100%;height:100%;border:none;background:#fff"></iframe>
@@ -1500,13 +1489,11 @@ function toast(msg,type=''){
 }
 
 // ── INIT ───────────────────────────────────────────────
-// ── INIT ───────────────────────────────────────────────
 (async()=>{
   const token = localStorage.getItem('paac_token');
   const nome  = localStorage.getItem('paac_nome');
   if(token && nome){
-    // Tenta usar token salvo; se inválido, tenta refresh
-    KEY = token;
+    USER_TOKEN = token; KEY = token;
     try{
       const test = await fetch(`${SUPABASE_URL}/rest/v1/sessoes_tutoria?limit=1`,{
         headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+token}
@@ -1517,9 +1504,7 @@ function toast(msg,type=''){
       }
       boot(nome, KEY);
     }catch(e){mostrarLogin();}
-  } else {
-    mostrarLogin();
-  }
+  } else { mostrarLogin(); }
 })();
 
 function mostrarLogin(){

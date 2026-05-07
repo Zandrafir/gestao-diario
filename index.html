@@ -351,8 +351,8 @@ document.head.appendChild(link);
   </div>
 
   <!-- AULAS -->
-  <div class="page" id="page-aulas">
-    <div id="aulas-view-horario">
+  <div class="page" id="page-Aulas">
+    <div id="Aulas-view-horario">
       <div class="section-title" style="margin-bottom:10px">Grade Horária</div>
       <div class="card" style="margin-bottom:12px">
         <div class="card-title">Semana Atual</div>
@@ -370,7 +370,7 @@ document.head.appendChild(link);
         <div class="turma-grid" id="turmas-2ano"></div>
       </div>
     </div>
-    <div id="aulas-view-turma" style="display:none">
+    <div id="Aulas-view-turma" style="display:none">
       <div class="back-row" onclick="voltarTurmas()">
         <div class="back-btn">←</div>
         <div class="back-title" id="turma-titulo">Turma</div>
@@ -382,7 +382,7 @@ document.head.appendChild(link);
         </div>
         <div class="progress-bar"><div class="progress-fill" id="turma-prog-fill" style="width:0%;background:linear-gradient(90deg,var(--green),var(--neon))"></div></div>
       </div>
-      <div id="aulas-list-turma"></div>
+      <div id="Aulas-list-turma"></div>
     </div>
   </div>
 
@@ -607,14 +607,12 @@ document.head.appendChild(link);
 </div>
 
 <script>
-// ── CONFIG ─────────────────────────────────────────────
-// Credenciais fixas
+// ── CONFIG FIXO ────────────────────────────────────────
 const SUPABASE_URL = 'https://ddtoferhisbnmxhitoff.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkdG9mZXJoaXNibm14aGl0b2ZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4Njc5ODYsImV4cCI6MjA5MjQ0Mzk4Nn0.BSbHnFxN25IHDl3EEAAdHQS-7yCL0XNvoVsgtc1jw94';
-const GITHUB_BASE  = 'https://zandrafir.github.io/paac-gestao';
-let URL  = SUPABASE_URL;
-let KEY  = SUPABASE_KEY;   // sempre anon key
-let USER_TOKEN = null;     // token do usuário logado
+const GITHUB_BASE = 'https://zandrafir.github.io/paac-gestao';
+let URL = SUPABASE_URL;
+let KEY = SUPABASE_KEY;
 let NAME = '';
 let curPage='home', curStatus='pendente';
 let curTurma=null, curAulaId=null;
@@ -636,7 +634,7 @@ const TURMAS_1 = ['1ºA','1ºB','1ºC','1ºD','1ºE'];
 const TURMAS_2 = ['2ºA','2ºB','2ºC','2ºD','2ºE','2ºF'];
 const TOTAL_AULAS = 14;
 
-// ── AUTH ──────────────────────────────────────────────
+// ── AUTH ───────────────────────────────────────────────
 async function fazerLogin(){
   const email = document.getElementById('login-email').value.trim();
   const senha = document.getElementById('login-senha').value;
@@ -653,11 +651,12 @@ async function fazerLogin(){
       body:JSON.stringify({email,password:senha})
     });
     const data = await res.json();
-    if(!res.ok) throw new Error(data.error_description||data.msg||'Credenciais inválidas');
+    if(!res.ok) throw new Error(data.error_description||data.msg||'Erro ao fazer login');
     const nome = data.user?.user_metadata?.name || data.user?.email?.split('@')[0] || 'Professor';
-    localStorage.setItem('paac_token',   data.access_token);
+    // Salvar sessão
+    localStorage.setItem('paac_token', data.access_token);
     localStorage.setItem('paac_refresh', data.refresh_token);
-    localStorage.setItem('paac_nome',    nome);
+    localStorage.setItem('paac_nome', nome);
     boot(nome, data.access_token);
   }catch(e){
     erroEl.textContent = e.message==='Invalid login credentials'?'E-mail ou senha incorretos.':e.message;
@@ -677,16 +676,16 @@ async function refreshSession(){
     });
     const data = await res.json();
     if(!res.ok) return false;
-    localStorage.setItem('paac_token',   data.access_token);
+    localStorage.setItem('paac_token', data.access_token);
     localStorage.setItem('paac_refresh', data.refresh_token);
-    USER_TOKEN = data.access_token;
+    KEY = data.access_token;
     return true;
   }catch(e){return false;}
 }
 
 function boot(nome, token){
-  NAME      = nome;
-  USER_TOKEN= token || null;
+  NAME = nome;
+  KEY = token || SUPABASE_KEY;
   const greeting = nome.startsWith('Prof')?nome:`Profº ${nome}`;
   document.getElementById('welcome-name').textContent=greeting;
   document.getElementById('user-avatar').textContent=nome.split(' ').pop()[0]||nome[0];
@@ -713,8 +712,7 @@ async function api(table,method='GET',body=null,filter=''){
   if(filter) params.push(filter);
   if(method==='GET') params.push('order=created_at.desc');
   if(params.length) url+='?'+params.join('&');
-  const tok=USER_TOKEN||KEY;
-  const h={'apikey':SUPABASE_KEY,'Authorization':'Bearer '+tok,'Content-Type':'application/json'};
+  const h={'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json'};
   if(method==='POST') h['Prefer']='return=representation';
   const r=await fetch(url,{method,headers:h,body:body?JSON.stringify(body):null});
   if(!r.ok){const e=await r.text();throw new Error(e);}
@@ -926,11 +924,14 @@ async function carregarPDFAula(grupo, num) {
   const pdfInfo = document.getElementById('ta-pdf-info');
   pdfArea.innerHTML = '<div class="loading"><div class="spinner"></div>Buscando PDF...</div>';
 
-  const pasta = grupo==='1ano' ? '2%C2%BA%20bimestre' : 'Aulas%20Revisadas';
-  const url   = `${GITHUB_BASE}/${pasta}/aula_${num}.pdf`;
+  // PDFs hospedados no GitHub Pages
+  // 1º ano → pasta "2º bimestre" | 2º ano → pasta "Aulas Revisadas"
+  const pasta = grupo === '1ano' ? '2%C2%BA%20bimestre' : 'Aulas%20Revisadas';
+  const url = `${GITHUB_BASE}/${pasta}/Aula_${string(num).padStart(2,'0')}.pdf`;
+
   try {
-    const check = await fetch(url,{method:'HEAD'});
-    if(check.ok){
+    const check = await fetch(url, { method: 'HEAD' });
+    if (check.ok) {
       pdfArea.innerHTML = `
         <div style="width:100%;height:70vh;border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border2)">
           <iframe src="${url}" style="width:100%;height:100%;border:none;background:#fff"></iframe>
@@ -942,20 +943,25 @@ async function carregarPDFAula(grupo, num) {
       pdfArea.innerHTML = `
         <div style="text-align:center;color:var(--text3);padding:30px">
           <div style="font-size:48px;margin-bottom:12px">📄</div>
-          <div style="font-family:'Orbitron',sans-serif;font-size:12px">PDF não encontrado</div>
-          <div style="font-size:11px;margin-top:8px;line-height:1.7">Verifique se <span style="color:var(--neon)">aula_${num}.pdf</span> está na pasta <span style="color:var(--neon)">${grupo==='1ano'?'2º bimestre':'Aulas Revisadas'}</span> do GitHub.</div>
+          <div style="font-family:'Orbitron',sans-serif;font-size:12px;letter-spacing:1px">PDF não encontrado</div>
+          <div style="font-size:11px;margin-top:8px;line-height:1.7">
+            Certifique-se de que <span style="color:var(--neon)">aula_${num}.pdf</span><br>
+            está na pasta <span style="color:var(--neon)">${grupo==='1ano'?'2º bimestre':'Aulas Revisadas'}</span> do GitHub.
+          </div>
           <a href="${url}" target="_blank" style="display:inline-block;margin-top:14px;color:var(--neon);font-size:11px;font-family:'Orbitron',sans-serif">↗ TENTAR MESMO ASSIM</a>
         </div>`;
-      pdfInfo.innerHTML=''; uploadForm.innerHTML='';
+      pdfInfo.innerHTML = '';
+      uploadForm.innerHTML = '';
     }
   } catch(e) {
+    // HEAD bloqueado por CORS — carrega no iframe direto
     pdfArea.innerHTML = `
       <div style="width:100%;height:70vh;border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border2)">
         <iframe src="${url}" style="width:100%;height:100%;border:none;background:#fff"></iframe>
       </div>
       <a href="${url}" target="_blank" style="display:block;text-align:center;color:var(--neon);font-size:12px;margin-top:10px;font-family:'Orbitron',sans-serif;letter-spacing:1px">↗ ABRIR EM NOVA ABA</a>`;
-    pdfInfo.innerHTML=`<div style="font-size:12px;color:var(--neon);margin-bottom:10px">📄 Aula ${num}</div>`;
-    uploadForm.innerHTML='';
+    pdfInfo.innerHTML = `<div style="font-size:12px;color:var(--neon);margin-bottom:10px">📄 Aula ${num}</div>`;
+    uploadForm.innerHTML = '';
   }
 }
 
@@ -1494,11 +1500,13 @@ function toast(msg,type=''){
 }
 
 // ── INIT ───────────────────────────────────────────────
+// ── INIT ───────────────────────────────────────────────
 (async()=>{
   const token = localStorage.getItem('paac_token');
   const nome  = localStorage.getItem('paac_nome');
   if(token && nome){
-    USER_TOKEN = token;
+    // Tenta usar token salvo; se inválido, tenta refresh
+    KEY = token;
     try{
       const test = await fetch(`${SUPABASE_URL}/rest/v1/sessoes_tutoria?limit=1`,{
         headers:{'apikey':SUPABASE_KEY,'Authorization':'Bearer '+token}
@@ -1507,7 +1515,7 @@ function toast(msg,type=''){
         const ok = await refreshSession();
         if(!ok){mostrarLogin();return;}
       }
-      boot(nome, USER_TOKEN);
+      boot(nome, KEY);
     }catch(e){mostrarLogin();}
   } else {
     mostrarLogin();

@@ -665,7 +665,8 @@ async function api(table,method='GET',body=null,filter=''){
   if(filter) params.push(filter);
   if(method==='GET') params.push('order=created_at.desc');
   if(params.length) url+='?'+params.join('&');
-  const h={'apikey':KEY,'Authorization':'Bearer '+KEY,'Content-Type':'application/json'};
+  const authToken = USER_TOKEN || KEY;
+  const h={'apikey':SUPABASE_KEY,'Authorization':'Bearer '+authToken,'Content-Type':'application/json'};
   if(method==='POST') h['Prefer']='return=representation';
   const r=await fetch(url,{method,headers:h,body:body?JSON.stringify(body):null});
   if(!r.ok){const e=await r.text();throw new Error(e);}
@@ -926,8 +927,8 @@ async function uploadPDFAula() {
     let up = await fetch(`${URL}/storage/v1/object/materiais/${path}`, {
       method:'POST',
       headers:{
-        'apikey':KEY,
-        'Authorization':'Bearer '+KEY,
+        'apikey':SUPABASE_KEY,
+        'Authorization':'Bearer '+(USER_TOKEN||KEY),
         'Content-Type':'application/pdf',
         'x-upsert':'true'
       },
@@ -939,8 +940,8 @@ async function uploadPDFAula() {
       up = await fetch(`${URL}/storage/v1/object/materiais/${path}`, {
         method:'PUT',
         headers:{
-          'apikey':KEY,
-          'Authorization':'Bearer '+KEY,
+          'apikey':SUPABASE_KEY,
+          'Authorization':'Bearer '+(USER_TOKEN||KEY),
           'Content-Type':'application/pdf'
         },
         body:file

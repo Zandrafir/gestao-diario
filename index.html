@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Gestão Acadêmica</title>
+<title>PAAC — Gestão Acadêmica</title>
 <link rel="manifest" href="/manifest.json">
 <meta name="theme-color" content="#00ffff">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -610,7 +610,7 @@ document.head.appendChild(link);
 // ── CONFIG ─────────────────────────────────────────────
 const SUPABASE_URL = 'https://ddtoferhisbnmxhitoff.supabase.co';
 const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImRkdG9mZXJoaXNibm14aGl0b2ZmIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY4Njc5ODYsImV4cCI6MjA5MjQ0Mzk4Nn0.BSbHnFxN25IHDl3EEAAdHQS-7yCL0XNvoVsgtc1jw94';
-const GITHUB_BASE  = 'https://zandrafir.github.io/paac-gestao';
+const GITHUB_BASE  = 'https://zandrafir.github.io/gestao-diario';
 let URL  = SUPABASE_URL;
 let KEY  = SUPABASE_KEY;
 let USER_TOKEN = null;
@@ -920,7 +920,7 @@ async function carregarPDFAula(grupo, num) {
   const pdfInfo = document.getElementById('ta-pdf-info');
   pdfArea.innerHTML = '<div class="loading"><div class="spinner"></div>Buscando PDF...</div>';
 
-  const pasta = grupo === '1ano' ? '2%C2%BA%20bimestre' : 'Aulas%20Revisadas';
+  const pasta = grupo === '1ano' ? '2%C2%B0%20bimestre' : 'Aulas%20Revisadas';
   const numStr = String(num).padStart(2, '0');
   const url = `${GITHUB_BASE}/${pasta}/Aula_${numStr}.pdf`;
   try {

@@ -362,11 +362,11 @@ document.head.appendChild(link);
       </div>
       <div class="section-title" style="margin-bottom:10px">Turmas</div>
       <div style="margin-bottom:8px">
-        <div class="card-title">1º ANO</div>
+        <div class="card-title">8º ANO</div>
         <div class="turma-grid" id="turmas-1ano"></div>
       </div>
       <div>
-        <div class="card-title" style="margin-top:12px">2º ANO</div>
+        <div class="card-title" style="margin-top:12px">9º ANO</div>
         <div class="turma-grid" id="turmas-2ano"></div>
       </div>
     </div>
@@ -621,18 +621,19 @@ let fontSize=15;
 
 // HORÁRIO
 const HORARIO=[
-  {hora:'14:30-15:20',seg:'1ºC',ter:'2ºE',qua:null,qui:'2ºD',sex:null},
-  {hora:'15:20-16:10',seg:'1ºC',ter:'2ºE',qua:null,qui:'2ºD',sex:null},
-  {hora:'16:20-17:10',seg:null,ter:'2ºA',qua:'2ºB',qui:null,sex:'1ºA'},
-  {hora:'17:10-18:00',seg:null,ter:'2ºA',qua:'2ºB',qui:null,sex:'1ºA'},
-  {hora:'18:00-18:50',seg:null,ter:'1ºE',qua:null,qui:null,sex:'1ºD'},
-  {hora:'18:50-19:50',seg:'—',ter:'—',qua:'INTERVALO',qui:'—',sex:'—'},
-  {hora:'19:50-20:40',seg:'1ºB',ter:'1ºE',qua:'2ºC',qui:null,sex:null},
-  {hora:'20:40-21:30',seg:'1ºB',ter:'1ºD',qua:'2ºC',qui:'2ºF',sex:'2ºF'},
+  {hora:'07:00-07:50',seg:'9ºE',ter:'9ºD',qua:'9ºD',qui:'8ºE',sex:'9ºE'},
+  {hora:'07:50-08:40',seg:null, ter:'9ºD',qua:'9ºB',qui:'8ºE',sex:'9ºE'},
+  {hora:'08:40-09:30',seg:'8ºC',ter:'8ºE',qua:'9ºB',qui:'9ºB',sex:'9ºC'},
+  {hora:'09:30-09:40',seg:'—',  ter:'—',  qua:'—',  qui:'—',  sex:'—'},
+  {hora:'09:40-10:30',seg:'9ºA',ter:'9ºA',qua:'8ºC',qui:'9ºC',sex:'8ºD'},
+  {hora:'10:30-11:20',seg:null, ter:'9ºA',qua:'8ºC',qui:'9ºC',sex:'8ºD'},
+  {hora:'11:20-12:20',seg:'—',  ter:'—',  qua:'—',  qui:'—',  sex:'—'},
+  {hora:'12:20-13:10',seg:null, ter:null, qua:null,  qui:'8ºD',sex:null},
+  {hora:'13:10-14:00',seg:'—',  ter:'—',  qua:'—',  qui:'—',  sex:'—'},
 ];
 
-const TURMAS_1 = ['1ºA','1ºB','1ºC','1ºD','1ºE'];
-const TURMAS_2 = ['2ºA','2ºB','2ºC','2ºD','2ºE','2ºF'];
+const TURMAS_1 = ['8ºC','8ºD','8ºE'];
+const TURMAS_2 = ['9ºA','9ºB','9ºC','9ºD','9ºE'];
 const TOTAL_AULAS = 14;
 
 // ── AUTH ──────────────────────────────────────────────
@@ -792,7 +793,7 @@ function renderHorario(){
       if(v==='—'||v===null){html+=`<td><span class="vazio">—</span></td>`;}
       else if(v==='INTERVALO'){html+=`<td colspan="1"><span class="intervalo">☕</span></td>`;}
       else{
-        const is2=v.startsWith('2');
+        const is2=v.startsWith('9');
         html+=`<td><div class="aula-cell ${is2?'s2':''}" onclick="abrirTurma('${v}')">${v}</div></td>`;
       }
     });
@@ -846,8 +847,8 @@ async function loadAulasTurma(turma){
   const el=document.getElementById('aulas-list-turma');
   el.innerHTML=loading();
   try{
-    // Determina grupo: 1ano ou 2ano
-    const grupo=turma.startsWith('1')?'1ano':'2ano';
+    // Determina grupo: 8ano ou 9ano
+    const grupo=turma.startsWith('8')?'8ano':'9ano';
     // Busca aulas do grupo
     const rows=await api('aulas_turma','GET',null,`grupo=eq.${grupo}&order=numero_aula.asc`);
     // Busca progresso específico desta turma
@@ -920,7 +921,9 @@ async function carregarPDFAula(grupo, num) {
   const pdfInfo = document.getElementById('ta-pdf-info');
   pdfArea.innerHTML = '<div class="loading"><div class="spinner"></div>Buscando PDF...</div>';
 
-  const pasta = grupo === '1ano' ? '2%C2%B0%20bimestre' : 'Aulas%20Revisadas';
+  const pasta = grupo === '8ano'
+    ? 'Aulas/8%C2%BA%20Ano/2%C2%BABimestre'
+    : 'Aulas/9%C2%BA%20Ano/2%C2%BABimestre';
   const numStr = String(num).padStart(2, '0');
   const url = `${GITHUB_BASE}/${pasta}/Aula_${numStr}.pdf`;
   try {
@@ -938,7 +941,7 @@ async function carregarPDFAula(grupo, num) {
         <div style="text-align:center;color:var(--text3);padding:30px">
           <div style="font-size:48px;margin-bottom:12px">📄</div>
           <div style="font-family:'Orbitron',sans-serif;font-size:12px">PDF não encontrado</div>
-          <div style="font-size:11px;margin-top:8px;line-height:1.7">Verifique se <span style="color:var(--neon)">Aula_${numStr}.pdf</span> está na pasta <span style="color:var(--neon)">${grupo==='1ano'?'2º bimestre':'Aulas Revisadas'}</span> do GitHub.</div>
+          <div style="font-size:11px;margin-top:8px;line-height:1.7">Verifique se <span style="color:var(--neon)">Aula_${numStr}.pdf</span> está na pasta <span style="color:var(--neon)">${grupo==='8ano'?'Aulas/8º Ano/2ºBimestre':'Aulas/9º Ano/2ºBimestre'}</span> do GitHub.</div>
           <a href="${url}" target="_blank" style="display:inline-block;margin-top:14px;color:var(--neon);font-size:11px;font-family:'Orbitron',sans-serif">↗ TENTAR MESMO ASSIM</a>
         </div>`;
       pdfInfo.innerHTML = ''; uploadForm.innerHTML = '';

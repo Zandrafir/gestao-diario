@@ -1917,6 +1917,17 @@ function urlBase64ToUint8Array(base64String){
   return arr;
 }
 
+// Corrida contra um timeout: se a promise passada nunca resolver NEM
+// rejeitar (o sintoma relatado - botão travado em "ATIVANDO..."), isso força
+// uma rejeição depois de `ms` para o catch de fora conseguir agir.
+function comTimeout(promise, ms, etapa){
+  let timer;
+  const timeout = new Promise((_, reject)=>{
+    timer = setTimeout(()=>reject(new Error(`Tempo esgotado em: ${etapa}`)), ms);
+  });
+  return Promise.race([promise, timeout]).finally(()=>clearTimeout(timer));
+}
+
 async function pedirPermissaoNotificacao(){
   if(!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)){
     toast('Push não suportado neste navegador','error'); return;
@@ -1924,43 +1935,108 @@ async function pedirPermissaoNotificacao(){
   const btn = document.getElementById('btn-notif');
   btn.disabled = true; btn.textContent = 'ATIVANDO...';
   try{
+    console.log('[push] Solicitando permissão de notificação...');
     const perm = await Notification.requestPermission();
-    if(perm!=='granted'){ toast('Permissão não concedida','error'); atualizarStatusNotificacao(); return; }
+    console.log('[push] Permissão retornada pelo navegador:', perm);
+    if(perm!=='granted'){
+      toast('Permissão não concedida','error');
+      atualizarStatusNotificacao();
+      return;
+    }
     await ativarPushReal();
     localStorage.setItem('push_ativo','1');
     toast('Alertas de chamada ativados!','success');
-  }catch(e){
-    toast('Erro ao ativar push: '+e.message,'error');
-  }finally{
     atualizarStatusNotificacao();
+  }catch(e){
+    // Não deixa o botão preso em "ATIVANDO..." - some erro concreto e visível,
+    // e o professor pode clicar de novo pra tentar (não sobrescrevo com
+    // atualizarStatusNotificacao aqui de propósito, senão o texto de falha
+    // desaparece antes de dar tempo de ler).
+    console.error('[push] ERRO ao ativar notificações push:', e);
+    localStorage.removeItem('push_ativo');
+    btn.disabled = false;
+    btn.textContent = '⚠️ FALHA - TENTAR NOVAMENTE';
+    alert('Não foi possível ativar as notificações de chamada.\n\nDetalhe técnico: ' + (e?.message || e));
   }
 }
 
 // Assina o push no navegador e salva a subscription no Supabase (upsert por
 // endpoint, para não duplicar se o professor reativar no mesmo aparelho).
+// Cada etapa tem seu próprio try/catch + console.error, e um timeout de 10s
+// pra nenhuma delas travar o botão pra sempre caso a promise nunca resolva.
 async function ativarPushReal(){
-  const reg = await navigator.serviceWorker.ready;
-  let sub = await reg.pushManager.getSubscription();
-  if(!sub){
-    sub = await reg.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
-    });
+  console.log('[push] Iniciando ativarPushReal()...');
+
+  let reg;
+  try{
+    reg = await comTimeout(navigator.serviceWorker.ready, 10000, 'registro do Service Worker');
+    console.log('[push] Service Worker pronto:', reg?.active?.scriptURL || reg);
+  }catch(e){
+    console.error('[push] Falha no registro/prontidão do Service Worker:', e);
+    throw new Error('Service Worker não respondeu a tempo. Recarregue a página e tente de novo. (' + e.message + ')');
   }
-  const j = sub.toJSON();
-  const url = `${URL}/rest/v1/push_subscriptions?on_conflict=endpoint`;
-  const r = await fetch(url, {
-    method:'POST',
-    headers:{
-      apikey: SUPABASE_KEY,
-      Authorization: 'Bearer '+(USER_TOKEN||KEY),
-      'Content-Type':'application/json',
-      Prefer:'resolution=merge-duplicates,return=minimal'
-    },
-    body: JSON.stringify({ endpoint: j.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth })
-  });
-  if(!r.ok) throw new Error(await r.text());
+
+  let sub;
+  try{
+    sub = await reg.pushManager.getSubscription();
+    if(!sub){
+      const chaveAplicacao = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+      console.log('[push] Nenhuma subscription existente. Assinando com applicationServerKey de', chaveAplicacao.length, 'bytes (esperado: 65).');
+      if(chaveAplicacao.length !== 65){
+        throw new Error(`VAPID_PUBLIC_KEY inválida: gerou ${chaveAplicacao.length} bytes, esperado 65 (chave pública P-256 não comprimida).`);
+      }
+      sub = await comTimeout(
+        reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: chaveAplicacao }),
+        10000,
+        'assinatura no PushManager'
+      );
+    }
+    console.log('[push] Subscription OK, endpoint:', sub?.endpoint);
+  }catch(e){
+    console.error('[push] Falha ao assinar no PushManager:', e);
+    throw new Error('Não foi possível assinar o push neste navegador/aparelho. (' + e.message + ')');
+  }
+
+  try{
+    const j = sub.toJSON();
+    const url = `${URL}/rest/v1/push_subscriptions?on_conflict=endpoint`;
+    const r = await comTimeout(fetch(url, {
+      method:'POST',
+      headers:{
+        apikey: SUPABASE_KEY,
+        Authorization: 'Bearer '+(USER_TOKEN||KEY),
+        'Content-Type':'application/json',
+        Prefer:'resolution=merge-duplicates,return=minimal'
+      },
+      body: JSON.stringify({ endpoint: j.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth })
+    }), 10000, 'gravação no Supabase');
+    if(!r.ok){
+      const corpo = await r.text().catch(()=>'');
+      throw new Error(`HTTP ${r.status} — ${corpo}`);
+    }
+    console.log('[push] Subscription salva no Supabase com sucesso.');
+  }catch(e){
+    console.error('[push] Falha ao salvar a subscription no Supabase:', e);
+    throw new Error('Não foi possível salvar a inscrição no Supabase. (' + e.message + ')');
+  }
 }
+
+// Testa isoladamente se a VAPID_PUBLIC_KEY converte para os 65 bytes
+// esperados de uma chave pública P-256 não comprimida (0x04 + X(32) + Y(32)).
+// Roda uma vez na carga da página só para acusar no console se a chave em
+// uso estiver com formato errado (não altera nada na UI).
+(function validarFormatoVapid(){
+  try{
+    const bytes = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
+    if(bytes.length !== 65 || bytes[0] !== 0x04){
+      console.error('[push] VAPID_PUBLIC_KEY com formato inesperado:', {tamanho: bytes.length, primeiroByte: bytes[0]});
+    }else{
+      console.log('[push] VAPID_PUBLIC_KEY validada com sucesso (65 bytes, prefixo 0x04).');
+    }
+  }catch(e){
+    console.error('[push] Erro ao decodificar VAPID_PUBLIC_KEY na carga da página:', e);
+  }
+})();
 
 function checarNotificacoesAula(agora=new Date()){
   if(pushAtivo()) return; // push real cuida disso no servidor - motor local desliga

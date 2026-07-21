@@ -421,7 +421,7 @@ document.head.appendChild(link);
     <div class="card" style="margin-bottom:12px">
       <div class="card-title">Filtros</div>
       <div class="form-group"><label class="form-label">Turma</label>
-        <select class="form-input" id="nt-turma" onchange="carregarNotasTurma()">
+        <select class="form-input" id="nt-turma" onchange="carregarNotasTurma(); autoCarregarAlunosDoSED();">
           <option value="">Selecione...</option>
         </select>
       </div>
@@ -1606,12 +1606,40 @@ function populateTurmaSelectNotas(){
 
 let notasLinhas = []; // [{nome, nota}]
 
+// A extensão "Integração SED" salva os alunos extraídos do portal com o nome
+// completo da turma (ex: "8° Ano D Integral 7H T1 Anual"). Aqui convertemos
+// isso pra sigla curta usada no PWA (ex: "8ºD") pra poder casar com o
+// seletor de turma desta tela.
+function siglaDaTurmaSED(turmaSed){
+  if(!turmaSed) return null;
+  const m = turmaSed.match(/(\d)\s*°?\s*Ano\s*([A-Za-z])/i);
+  return m ? `${m[1]}º${m[2].toUpperCase()}` : null;
+}
+
+// Busca automática: se a turma selecionada já tem alunos extraídos pela
+// extensão (tabela alunos_sed), preenche a lista de lançamento sozinha - só
+// quando a lista ainda está vazia, pra nunca sobrescrever notas que o
+// professor já esteja digitando.
+async function autoCarregarAlunosDoSED(){
+  const turma=document.getElementById('nt-turma').value;
+  if(!turma || notasLinhas.length) return;
+  try{
+    const todos=await api('alunos_sed','GET',null,'select=nome,turma&order=numero.asc');
+    const doTurma=todos.filter(a=>siglaDaTurmaSED(a.turma)===turma);
+    if(!doTurma.length) return;
+    notasLinhas=doTurma.map(a=>({nome:a.nome, nota:''}));
+    renderLinhasNotas();
+    toast(`${doTurma.length} aluno(s) carregado(s) da extração SED`,'success');
+  }catch(e){ /* silencioso - não deve travar o fluxo manual de colar nomes */ }
+}
+
 function loadNotas(){
   populateTurmaSelectNotas();
   document.getElementById('nt-bimestre').value = curBimestre;
   renderLinhasNotas();
   const turma=document.getElementById('nt-turma').value;
-  if(turma) carregarNotasTurma(); else document.getElementById('nt-lista-salvas').innerHTML=empty('📝','Selecione uma turma para ver as notas lançadas.');
+  if(turma){ carregarNotasTurma(); autoCarregarAlunosDoSED(); }
+  else document.getElementById('nt-lista-salvas').innerHTML=empty('📝','Selecione uma turma para ver as notas lançadas.');
 }
 
 function adicionarLinhaNota(nome=''){

@@ -4,9 +4,9 @@
   "display": "standalone",
   "name": "Gestão Diário",
   "orientation": "any",
-  "scope": "/",
+  "scope": ".",
   "short_name": "Gestão",
-  "start_url": "/",
+  "start_url": ".",
   "theme_color": "#00ffff",
   "description": "Sistema de Gestão Acadêmica"
 }

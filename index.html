@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <title>Gestão Acadêmica</title>
-<link rel="manifest" href="/manifest.json">
+<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#00ffff">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -246,7 +246,8 @@ const manifestData = {
   name: 'Gestão Diário',
   short_name: 'Gestão',
   description: 'Sistema de Gestão Acadêmica para professores',
-  start_url: '/',
+  start_url: '.',
+  scope: '.',
   display: 'standalone',
   background_color: '#050710',
   theme_color: '#00ffff',
@@ -2172,6 +2173,6 @@ function mostrarLogin(){
   document.getElementById('setup-screen').style.cssText='display:flex;flex-direction:column;align-items:center;justify-content:center;padding:32px;';
 }
 </script>
-<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("/sw.js").then(()=>console.log("SW ok")).catch(e=>console.log("SW erro",e));}</script>
+<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").then(()=>console.log("SW ok")).catch(e=>console.log("SW erro",e));}</script>
 </body>
 </html>

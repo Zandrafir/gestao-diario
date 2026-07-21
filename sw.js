@@ -1,8 +1,14 @@
-const CACHE_NAME = 'gestao-diario-v2';
+const CACHE_NAME = 'gestao-diario-v3';
+// Caminhos relativos (sem barra inicial) de propósito: com barra inicial eles
+// apontam pra raiz do domínio, não pra pasta do projeto - em site de projeto
+// do GitHub Pages (zandrafir.github.io/gestao-diario/) isso resolvia pra
+// zandrafir.github.io/ (errado, geralmente 404), fazendo o cache.addAll falhar
+// e o install do SW nunca completar (o que também travava o "ready" pendurado
+// pra sempre no fluxo de push).
 const urlsToCache = [
-  '/',
-  '/index.html',
-  '/manifest.json'
+  './',
+  './index.html',
+  './manifest.json'
 ];
 
 self.addEventListener('install', event => {

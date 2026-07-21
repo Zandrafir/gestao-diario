@@ -729,7 +729,37 @@ const HORARIO=[
 
 const TURMAS_1 = ['8ºC','8ºD','8ºE'];
 const TURMAS_2 = ['9ºA','9ºB','9ºC','9ºD','9ºE'];
-const TOTAL_AULAS = 14;
+const TOTAL_AULAS_8ANO = 14;
+const TOTAL_AULAS_9ANO = 18;
+function totalAulasPorTurma(turma){ return turma.startsWith('8') ? TOTAL_AULAS_8ANO : TOTAL_AULAS_9ANO; }
+function totalAulasPorGrupo(grupo){ return grupo==='8ano' ? TOTAL_AULAS_8ANO : TOTAL_AULAS_9ANO; }
+
+// Normaliza nomes de diretório antes de montar o caminho no Storage: troca
+// barras invertidas (comuns em paths copiados do Windows) e hífens soltos
+// (com ou sem espaço ao redor, ex: "9º Ano - 3º Bimestre") por barra normal,
+// garantindo "9º Ano/3º Bimestre" independente de como o texto chegou.
+function normalizarCaminhoStorage(caminho){
+  return caminho
+    .replace(/\\/g, '/')
+    .replace(/\s*-\s*/g, '/')
+    .split('/')
+    .map(s=>s.trim())
+    .filter(Boolean)
+    .join('/');
+}
+function nomeGrupoAno(grupo){ return grupo==='8ano' ? '8º Ano' : '9º Ano'; }
+
+// O Storage do Supabase rejeita QUALQUER caractere fora do ASCII na chave do
+// objeto (testado: 'º' e até acentos comuns como 'É' voltam "400 Invalid key").
+// Por isso, depois de normalizar as barras/separadores, ainda precisamos trocar
+// 'º'/'ª' e letras acentuadas por equivalentes ASCII antes de montar o path
+// que vai de fato para o storage (o nome "bonito" continua exibido na UI).
+function sanitizarParaStorageKey(caminho){
+  return caminho
+    .replace(/º/g,'o').replace(/ª/g,'a')
+    .normalize('NFD').replace(/[̀-ͯ]/g,'')
+    .replace(/[^a-zA-Z0-9 _\-\/.]/g,'');
+}
 
 // ── AUTH ──────────────────────────────────────────────
 async function fazerLogin(){
@@ -924,8 +954,9 @@ async function renderTurmas(){
   }catch(e){}
 
   function turmaCard(t){
-    const p=progMap[t]||{total:TOTAL_AULAS,done:0};
-    const pct=Math.round((p.done/TOTAL_AULAS)*100);
+    const totalTurma=totalAulasPorTurma(t);
+    const p=progMap[t]||{total:totalTurma,done:0};
+    const pct=Math.round((p.done/totalTurma)*100);
     return `<div class="turma-card" onclick="abrirTurma('${t}')">
       <div class="turma-nome">${t}</div>
       <div class="turma-serie">História</div>
@@ -968,15 +999,16 @@ async function loadAulasTurma(turma){
     progRows.forEach(r=>{statusMap[r.numero_aula]=r;});
 
     // Calcula progresso da turma
+    const totalTurma=totalAulasPorTurma(turma);
     const done=progRows.filter(r=>r.status==='concluida').length;
-    const pct=Math.round((done/TOTAL_AULAS)*100);
+    const pct=Math.round((done/totalTurma)*100);
     document.getElementById('turma-prog-fill').style.width=pct+'%';
     document.getElementById('turma-prog-pct').textContent=pct+'%';
-    document.getElementById('turma-prog-label').textContent=`${done}/${TOTAL_AULAS} aulas`;
+    document.getElementById('turma-prog-label').textContent=`${done}/${totalTurma} aulas`;
 
-    // Renderiza as 14 aulas
+    // Renderiza as aulas (14 para 8º ano, 18 para 9º ano)
     let html='';
-    for(let i=1;i<=TOTAL_AULAS;i++){
+    for(let i=1;i<=totalTurma;i++){
       const r=statusMap[i]||{numero_aula:i,status:'pendente',pauta:'',onde_parei:'',combinados:'',observacoes:''};
       const icon={pendente:'⬜',andamento:'🟡',concluida:'✅'}[r.status]||'⬜';
       html+=`<div class="aula-num-item ${r.status||'pendente'}" onclick='abrirAulaDetalhe(${i},"${turma}","${grupo}",${JSON.stringify(r).replace(/"/g,"&quot;")})'>
@@ -1024,53 +1056,41 @@ function felarTelaAula() {
   if(curAulaCtx) loadAulasTurma(curAulaCtx.turma);
 }
 
+// Fonte de verdade do PDF é a tabela `pdfs_aula` (upload direto pro Storage do
+// Supabase) - não depende mais de um HEAD check no GitHub. O formulário de
+// upload fica sempre visível, permitindo enviar ou substituir o PDF a qualquer
+// momento (antes ele era apagado do DOM sempre que um PDF já existia).
 async function carregarPDFAula(grupo, num) {
   const pdfArea = document.getElementById('ta-pdf-content');
-  const uploadForm = document.getElementById('ta-upload-form');
   const pdfInfo = document.getElementById('ta-pdf-info');
+  const fileInput = document.getElementById('ta-file');
+  if (fileInput) fileInput.value = '';
   pdfArea.innerHTML = '<div class="loading"><div class="spinner"></div>Buscando PDF...</div>';
 
-  // Pasta depende do bimestre em uso (cada bimestre tem sua própria pasta de PDFs,
-  // então trocar o filtro global de bimestre também troca de onde os PDFs são buscados).
-  const bimNum = (curAulaCtx?.bimestre || curBimestre).charAt(0);
-  const pasta = grupo === '8ano'
-    ? `Aulas/8%C2%BA%20Ano/${bimNum}%C2%BABimestre`
-    : `Aulas/9%C2%BA%20Ano/${bimNum}%C2%BABimestre`;
-  const numStr = String(num).padStart(2, '0');
-  const url = `${GITHUB_BASE}/${pasta}/Aula_${numStr}.pdf`;
+  const bimestreAtual = curAulaCtx?.bimestre || curBimestre;
   try {
-    const check = await fetch(url, { method: 'HEAD' });
-    if (check.ok) {
+    const existentes = await api('pdfs_aula','GET',null,`grupo=eq.${grupo}&numero_aula=eq.${num}&bimestre=eq.${bimestreAtual}`);
+    const registro = existentes[0];
+    if (registro?.arquivo_url) {
       pdfArea.innerHTML = `
         <div style="width:100%;height:70vh;border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border2)">
-          <iframe src="${url}" style="width:100%;height:100%;border:none;background:#fff"></iframe>
+          <iframe src="${registro.arquivo_url}" style="width:100%;height:100%;border:none;background:#fff"></iframe>
         </div>
-        <a href="${url}" target="_blank" style="display:block;text-align:center;color:var(--neon);font-size:12px;margin-top:10px;font-family:'Orbitron',sans-serif;letter-spacing:1px">↗ ABRIR EM NOVA ABA</a>`;
-      pdfInfo.innerHTML = `<div style="font-size:12px;color:var(--green);margin-bottom:10px">✅ PDF carregado — Aula ${num}</div>`;
-      uploadForm.innerHTML = '';
+        <a href="${registro.arquivo_url}" target="_blank" style="display:block;text-align:center;color:var(--neon);font-size:12px;margin-top:10px;font-family:'Orbitron',sans-serif;letter-spacing:1px">↗ ABRIR EM NOVA ABA</a>`;
+      pdfInfo.innerHTML = `<div style="font-size:12px;color:var(--green);margin-bottom:10px">✅ PDF enviado — Aula ${num}. Envie outro arquivo abaixo para substituir.</div>`;
     } else {
       pdfArea.innerHTML = `
         <div style="text-align:center;color:var(--text3);padding:30px">
           <div style="font-size:48px;margin-bottom:12px">📄</div>
-          <div style="font-family:'Orbitron',sans-serif;font-size:12px">PDF não encontrado</div>
-          <div style="font-size:11px;margin-top:8px;line-height:1.7">Verifique se <span style="color:var(--neon)">Aula_${numStr}.pdf</span> está na pasta <span style="color:var(--neon)">${grupo==='8ano'?`Aulas/8º Ano/${bimNum}ºBimestre`:`Aulas/9º Ano/${bimNum}ºBimestre`}</span> do GitHub.</div>
-          <a href="${url}" target="_blank" style="display:inline-block;margin-top:14px;color:var(--neon);font-size:11px;font-family:'Orbitron',sans-serif">↗ TENTAR MESMO ASSIM</a>
+          <div style="font-family:'Orbitron',sans-serif;font-size:12px">Nenhum PDF enviado ainda</div>
+          <div style="font-size:11px;margin-top:8px;line-height:1.7">Use o formulário abaixo para subir o PDF desta aula.</div>
         </div>`;
-      pdfInfo.innerHTML = ''; uploadForm.innerHTML = '';
+      pdfInfo.innerHTML = '';
     }
   } catch(e) {
-    pdfArea.innerHTML = `
-      <div style="width:100%;height:70vh;border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border2)">
-        <iframe src="${url}" style="width:100%;height:100%;border:none;background:#fff"></iframe>
-      </div>
-      <a href="${url}" target="_blank" style="display:block;text-align:center;color:var(--neon);font-size:12px;margin-top:10px;font-family:'Orbitron',sans-serif;letter-spacing:1px">↗ ABRIR EM NOVA ABA</a>`;
-    pdfInfo.innerHTML = `<div style="font-size:12px;color:var(--neon);margin-bottom:10px">📄 Aula ${num}</div>`;
-    uploadForm.innerHTML = '';
+    pdfArea.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p>Erro ao verificar o PDF.<br><small style="color:var(--red)">${e.message}</small></p></div>`;
+    pdfInfo.innerHTML = '';
   }
-}
-
-function substituirPDF() {
-  document.getElementById('ta-upload-form-novo').style.display = 'block';
 }
 
 async function uploadPDFAula() {
@@ -1080,11 +1100,18 @@ async function uploadPDFAula() {
   if (!file) { toast('Selecione um PDF', 'error'); return; }
   toast('Enviando...', '');
   try {
-    const bimSlug = (curAulaCtx.bimestre||curBimestre).replace(/\s/g,'').toLowerCase();
-    const path = `pdfs/${grupo}/${bimSlug}/aula_${num}.pdf`;
+    const bimestreAtual = curAulaCtx.bimestre || curBimestre;
+    const bimNum = bimestreAtual.charAt(0);
+    const numStr = String(num).padStart(2, '0');
+    // Estrutura de pastas legível (ex: "9º Ano/3º Bimestre/Aula_01.pdf"), passada
+    // pela normalizadora de separadores e depois pela sanitizadora ASCII - o
+    // Storage do Supabase rejeita "º"/acentos direto na chave do objeto.
+    const pastaLegivel = normalizarCaminhoStorage(`${nomeGrupoAno(grupo)}/${bimNum}º Bimestre/Aula_${numStr}.pdf`);
+    const path = sanitizarParaStorageKey(pastaLegivel);
+    const BUCKET = 'resumos_aulas';
 
     // Tenta upsert (substitui se já existir)
-    let up = await fetch(`${URL}/storage/v1/object/materiais/${path}`, {
+    let up = await fetch(`${URL}/storage/v1/object/${BUCKET}/${path}`, {
       method:'POST',
       headers:{
         'apikey':KEY,
@@ -1097,7 +1124,7 @@ async function uploadPDFAula() {
 
     // Se POST falhar mesmo com upsert, tenta PUT
     if (!up.ok) {
-      up = await fetch(`${URL}/storage/v1/object/materiais/${path}`, {
+      up = await fetch(`${URL}/storage/v1/object/${BUCKET}/${path}`, {
         method:'PUT',
         headers:{
           'apikey':KEY,
@@ -1113,8 +1140,7 @@ async function uploadPDFAula() {
       throw new Error('Falha no upload: ' + (errBody || up.status));
     }
 
-    const arquivo_url = `${URL}/storage/v1/object/public/materiais/${path}`;
-    const bimestreAtual = curAulaCtx.bimestre || curBimestre;
+    const arquivo_url = `${URL}/storage/v1/object/public/${BUCKET}/${path}`;
 
     // Salvar ou atualizar registro na tabela (namespaced por bimestre, para não
     // sobrescrever o PDF de uma "Aula 1" de um bimestre anterior)
@@ -1814,7 +1840,7 @@ async function loadRelatorios(){
       <div class="card" style="margin-bottom:12px">
         <div class="card-title">Progresso por Turma</div>
         ${[...TURMAS_1,...TURMAS_2].map(t=>{
-          const pct=Math.round(((turmaMap[t]?.done||0)/TOTAL_AULAS)*100);
+          const pct=Math.round(((turmaMap[t]?.done||0)/totalAulasPorTurma(t))*100);
           return `<div style="margin-bottom:10px">
             <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:4px"><span style="color:var(--text)">${t}</span><span style="color:var(--green)">${pct}%</span></div>
             <div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:linear-gradient(90deg,var(--green),var(--neon))"></div></div>

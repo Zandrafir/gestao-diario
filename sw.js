@@ -1,4 +1,4 @@
-const CACHE_NAME = 'gestao-diario-v3';
+const CACHE_NAME = 'gestao-diario-v4';
 // Caminhos relativos (sem barra inicial) de propósito: com barra inicial eles
 // apontam pra raiz do domínio, não pra pasta do projeto - em site de projeto
 // do GitHub Pages (zandrafir.github.io/gestao-diario/) isso resolvia pra
@@ -27,11 +27,22 @@ self.addEventListener('activate', event => {
   );
 });
 
+// Rede primeiro, cache só como reserva (offline). Antes era "cache primeiro,
+// pra sempre" - qualquer atualização de index.html sem bump de CACHE_NAME
+// ficava presa em cache indefinidamente pra quem já tinha instalado o PWA
+// (foi exatamente isso que aconteceu: um professor testou uma correção e
+// continuava vendo a versão antiga). Assim, sempre que há internet, busca a
+// versão mais nova do GitHub Pages e atualiza o cache; só usa o cache quando
+// a rede falha (uso offline de verdade).
 self.addEventListener('fetch', event => {
   event.respondWith(
-    caches.match(event.request).then(response => {
-      return response || fetch(event.request);
-    })
+    fetch(event.request)
+      .then(response => {
+        const copia = response.clone();
+        caches.open(CACHE_NAME).then(cache => cache.put(event.request, copia));
+        return response;
+      })
+      .catch(() => caches.match(event.request))
   );
 });
 

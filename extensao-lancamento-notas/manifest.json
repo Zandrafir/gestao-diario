@@ -1,0 +1,25 @@
+{
+  "manifest_version": 3,
+  "name": "Gestao Diario - Lancamento de Notas SEDUC",
+  "version": "0.1.0",
+  "description": "Le as notas registradas no Gestao Diario (Supabase) e ajuda a lancar no Sala do Futuro Professor.",
+  "action": {
+    "default_popup": "popup.html",
+    "default_title": "Gestao Diario - Lancamento de Notas"
+  },
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://saladofuturoprofessor.educacao.sp.gov.br/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "permissions": ["activeTab", "scripting", "storage"],
+  "host_permissions": [
+    "https://saladofuturoprofessor.educacao.sp.gov.br/*",
+    "https://ddtoferhisbnmxhitoff.supabase.co/*"
+  ]
+}

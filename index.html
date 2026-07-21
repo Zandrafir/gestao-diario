@@ -8,7 +8,7 @@
 <meta name="theme-color" content="#00ffff">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="PAAC">
+<meta name="apple-mobile-web-app-title" content="Gestão Diário">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -50,6 +50,8 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 .header-left .subtitle{font-size:10px;color:var(--neon);font-weight:600;letter-spacing:2px;text-transform:uppercase}
 .header-left .title{font-family:'Orbitron',sans-serif;font-size:16px;font-weight:700;color:var(--text);letter-spacing:1px}
 .header-right{display:flex;gap:10px;align-items:center}
+.bimestre-select{background:var(--bg3);border:1px solid var(--border2);color:var(--neon);font-family:'Orbitron',sans-serif;font-size:10px;font-weight:700;letter-spacing:1px;border-radius:20px;padding:7px 10px;cursor:pointer;outline:none;appearance:none;text-align:center;text-align-last:center}
+.bimestre-select:focus{border-color:var(--neon);box-shadow:0 0 8px var(--neon-glow)}
 .header-avatar{width:36px;height:36px;border-radius:50%;background:transparent;border:2px solid var(--neon);display:flex;align-items:center;justify-content:center;font-family:'Orbitron',sans-serif;font-weight:900;font-size:13px;color:var(--neon);text-shadow:0 0 8px var(--neon);box-shadow:0 0 12px rgba(0,255,255,0.3)}
 .gear-btn{width:36px;height:36px;border-radius:50%;background:transparent;border:1px solid var(--border2);display:flex;align-items:center;justify-content:center;font-size:18px;cursor:pointer;transition:all .2s}
 .gear-btn:active{border-color:var(--neon);box-shadow:0 0 10px var(--neon-glow)}
@@ -190,6 +192,15 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 .back-btn{width:32px;height:32px;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
 .back-title{font-family:'Orbitron',sans-serif;font-size:14px;font-weight:700;color:var(--text)}
 
+/* CALENDARIO TUTORIA */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px}
+.cal-dow{font-size:9px;color:var(--text3);text-align:center;padding:2px 0;letter-spacing:.5px}
+.cal-dia{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:11px;cursor:pointer;background:var(--bg3);color:var(--text2);position:relative;transition:all .2s}
+.cal-dia:active{background:var(--card2)}
+.cal-dia.hoje{border:1px solid var(--neon);color:var(--neon);font-weight:700}
+.cal-dia.tem-agenda::after{content:'';position:absolute;bottom:3px;width:4px;height:4px;border-radius:50%;background:var(--purple);box-shadow:0 0 4px var(--purple)}
+.cal-dia.outro-mes{opacity:.25;cursor:default}
+
 /* SETTINGS */
 .settings-item{display:flex;justify-content:space-between;align-items:center;padding:14px 0;border-bottom:1px solid var(--border)}
 .settings-label{font-size:14px;font-weight:600;color:var(--text)}
@@ -213,7 +224,7 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 .empty-state p{font-size:13px;line-height:1.6}
 
 /* TOAST */
-#toast{position:fixed;top:20px;left:50%;transform:translateX(-50%) translateY(-80px);background:var(--card);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:10px 20px;font-size:12px;z-index:9999;transition:transform .3s;white-space:nowrap;font-family:'Orbitron',sans-serif}
+#toast{position:fixed;bottom:92px;left:50%;transform:translateX(-50%) translateY(80px);background:var(--card);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:10px 20px;font-size:12px;z-index:9999;transition:transform .3s;white-space:nowrap;font-family:'Orbitron',sans-serif;max-width:90vw;overflow:hidden;text-overflow:ellipsis}
 #toast.show{transform:translateX(-50%) translateY(0)}
 #toast.success{border-color:var(--green);color:var(--green);box-shadow:0 0 15px var(--green-g)}
 #toast.error{border-color:var(--red);color:var(--red);box-shadow:0 0 15px var(--red-g)}
@@ -232,8 +243,8 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
 <script>
 // Injetar manifest dinamicamente
 const manifestData = {
-  name: 'PAAC Gestão Acadêmica',
-  short_name: 'PAAC',
+  name: 'Gestão Diário',
+  short_name: 'Gestão',
   description: 'Sistema de Gestão Acadêmica para professores',
   start_url: '/',
   display: 'standalone',
@@ -255,23 +266,29 @@ document.head.appendChild(link);
 <!-- LOGIN -->
 <div id="setup-screen">
   <div style="font-size:48px;margin-bottom:12px">🎮</div>
-  <div class="setup-logo">P A A C</div>
+  <div class="setup-logo">GESTÃO</div>
   <div class="setup-sub">Sistema de Gestão Acadêmica</div>
   <input class="setup-input" id="login-email" type="email" placeholder="E-mail" autocomplete="email"/>
   <input class="setup-input" id="login-senha" type="password" placeholder="Senha" autocomplete="current-password" onkeydown="if(event.key==='Enter')fazerLogin()"/>
   <div id="login-erro" style="color:var(--red);font-size:12px;text-align:center;min-height:18px;margin-bottom:4px"></div>
   <button class="btn-setup" id="btn-login" onclick="fazerLogin()">▶ ENTRAR</button>
-  <p class="setup-note">Acesso restrito · PAAC 2025</p>
+  <p class="setup-note">Acesso restrito · Uso pessoal</p>
 </div>
 
 <!-- APP -->
 <div id="app">
   <div class="app-header">
     <div class="header-left">
-      <div class="subtitle">PAAC Dashboard</div>
+      <div class="subtitle">Painel do Professor</div>
       <div class="title" id="header-title">Gestão Acadêmica</div>
     </div>
     <div class="header-right">
+      <select class="bimestre-select" id="bimestre-global" onchange="mudarBimestreGlobal(this.value)" title="Bimestre em uso">
+        <option value="1º Bimestre">1º BIM</option>
+        <option value="2º Bimestre">2º BIM</option>
+        <option value="3º Bimestre">3º BIM</option>
+        <option value="4º Bimestre">4º BIM</option>
+      </select>
       <div class="gear-btn" onclick="goTo('settings')">⚙️</div>
       <div class="header-avatar" id="user-avatar">P</div>
     </div>
@@ -282,7 +299,7 @@ document.head.appendChild(link);
     <div class="welcome-card" style="position:sticky;top:0;z-index:10;">
       <div class="welcome-greeting">▸ BEM-VINDO DE VOLTA</div>
       <div class="welcome-name" id="welcome-name">Profº Thiago</div>
-      <div class="welcome-sub">PAAC — Gestor Acadêmico</div>
+      <div class="welcome-sub">Gestor Acadêmico</div>
       <div class="progress-section">
         <div class="progress-meta">
           <span>Progresso Geral das Aulas</span>
@@ -296,8 +313,8 @@ document.head.appendChild(link);
       <div class="module-grid">
         <div class="module-btn" onclick="goTo('tutoria')"><span class="mod-icon">🎓</span><span class="mod-label">Tutoria</span></div>
         <div class="module-btn" onclick="goTo('aulas')"><span class="mod-icon">📚</span><span class="mod-label">Aulas</span></div>
-        <div class="module-btn" onclick="goTo('atpcg')"><span class="mod-icon">🏫</span><span class="mod-label">ATPCG</span></div>
-        <div class="module-btn" onclick="goTo('projetos')"><span class="mod-icon">🚀</span><span class="mod-label">Projetos</span></div>
+        <div class="module-btn" onclick="goTo('notas')"><span class="mod-icon">📝</span><span class="mod-label">Notas</span></div>
+        <div class="module-btn" onclick="goTo('metodologias')"><span class="mod-icon">💡</span><span class="mod-label">Metodologias</span></div>
         <div class="module-btn" onclick="goTo('diario')"><span class="mod-icon">📓</span><span class="mod-label">Diário</span></div>
         <div class="module-btn" onclick="goTo('relatorios')"><span class="mod-icon">📊</span><span class="mod-label">Relatórios</span></div>
       </div>
@@ -312,9 +329,20 @@ document.head.appendChild(link);
   <div class="page" id="page-tutoria">
     <!-- VISÃO LISTA DE ALUNOS -->
     <div id="tut-view-alunos">
+      <div class="card" style="margin-bottom:12px">
+        <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <span id="cal-mes-label">Calendário</span>
+          <div style="display:flex;gap:6px">
+            <div class="font-btn" style="width:26px;height:26px;font-size:13px" onclick="calMudarMes(-1)">‹</div>
+            <div class="font-btn" style="width:26px;height:26px;font-size:13px" onclick="calMudarMes(1)">›</div>
+          </div>
+        </div>
+        <div class="cal-grid" id="cal-grid"></div>
+      </div>
       <div class="section-title" style="margin-bottom:10px">Meus Tutorados</div>
-      <div style="margin-bottom:12px">
-        <input class="form-input" id="tut-busca" placeholder="🔍 Buscar aluno..." oninput="filtrarAlunos()" style="padding:10px 14px;font-size:13px"/>
+      <div style="margin-bottom:12px;display:flex;gap:8px">
+        <input class="form-input" id="tut-busca" placeholder="🔍 Buscar aluno..." oninput="filtrarAlunos()" style="padding:10px 14px;font-size:13px;flex:1"/>
+        <button onclick="abrirListaMestra()" style="background:transparent;border:2px solid var(--purple);color:var(--purple);font-family:'Orbitron',sans-serif;font-weight:700;font-size:10px;letter-spacing:1px;border-radius:var(--radius-sm);padding:0 14px;cursor:pointer;white-space:nowrap">📋 MESTRA</button>
       </div>
       <div id="tut-alunos-list"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
     </div>
@@ -386,20 +414,64 @@ document.head.appendChild(link);
     </div>
   </div>
 
-  <!-- ATPCG -->
-  <div class="page" id="page-atpcg">
-    <div class="section-title">Reuniões ATPCG</div>
-    <div id="atpcg-list"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+  <!-- NOTAS -->
+  <div class="page" id="page-notas">
+    <div class="section-title" style="margin-bottom:10px">Notas por Aluno (História)</div>
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">Filtros</div>
+      <div class="form-group"><label class="form-label">Turma</label>
+        <select class="form-input" id="nt-turma" onchange="carregarNotasTurma()">
+          <option value="">Selecione...</option>
+        </select>
+      </div>
+      <div class="form-group"><label class="form-label">Bimestre</label>
+        <select class="form-input" id="nt-bimestre" onchange="carregarNotasTurma()">
+          <option value="1º Bimestre">1º Bimestre</option>
+          <option value="2º Bimestre">2º Bimestre</option>
+          <option value="3º Bimestre" selected>3º Bimestre</option>
+          <option value="4º Bimestre">4º Bimestre</option>
+        </select>
+      </div>
+      <div class="form-group" style="margin-bottom:0"><label class="form-label">Avaliação</label>
+        <input class="form-input" id="nt-avaliacao" value="Nota Bimestral" placeholder="Ex: Prova, Trabalho..."/>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">Colar Lista de Alunos</div>
+      <textarea class="form-input form-textarea" id="nt-colar" placeholder="Cole um nome por linha..."></textarea>
+      <button class="btn-primary" onclick="gerarLinhasNotas()">▶ GERAR LINHAS</button>
+    </div>
+
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">Lançar Notas</div>
+      <div id="nt-linhas"></div>
+      <button class="btn-cancel" style="text-align:left;color:var(--neon);padding:6px 0" onclick="adicionarLinhaNota()">+ Adicionar aluno</button>
+      <button class="btn-primary" onclick="salvarNotasTurma()">💾 SALVAR TODAS AS NOTAS</button>
+    </div>
+
+    <div class="section-title" style="margin-bottom:8px">Notas Já Lançadas</div>
+    <div id="nt-lista-salvas"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
   </div>
 
-  <!-- PROJETOS -->
-  <div class="page" id="page-projetos">
-    <div class="section-title">Projetos</div>
-    <div id="projetos-list"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+  <!-- METODOLOGIAS ATIVAS -->
+  <div class="page" id="page-metodologias">
+    <div class="section-title">Metodologias Ativas</div>
+    <div id="metodologias-list"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
   </div>
 
   <!-- DIÁRIO -->
   <div class="page" id="page-diario">
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-title">⏰ Lembretes</div>
+      <div class="form-group"><label class="form-label">Texto do Lembrete</label><input class="form-input" id="lb-texto" placeholder="Ex: Levar prova corrigida"/></div>
+      <div style="display:flex;gap:8px">
+        <div class="form-group" style="flex:1"><label class="form-label">Data</label><input class="form-input" type="date" id="lb-data"/></div>
+        <div class="form-group" style="flex:1"><label class="form-label">Hora</label><input class="form-input" type="time" id="lb-hora"/></div>
+      </div>
+      <button class="btn-primary" onclick="salvarLembrete()">▶ SALVAR LEMBRETE</button>
+      <div id="lb-lista" style="margin-top:12px"></div>
+    </div>
     <div class="section-title">Diário de Bordo</div>
     <div id="diario-list"></div>
   </div>
@@ -432,9 +504,16 @@ document.head.appendChild(link);
       </div>
     </div>
     <div class="card">
+      <div class="card-title">Notificações</div>
+      <div class="settings-item" style="border:none">
+        <div><div class="settings-label">Lembrete de Chamada</div><div class="settings-sub" id="notif-status-sub">Avisa 20min após o início de cada aula</div></div>
+        <button id="btn-notif" onclick="pedirPermissaoNotificacao()" style="background:transparent;border:2px solid var(--neon);color:var(--neon);font-family:'Orbitron',sans-serif;font-weight:700;font-size:10px;letter-spacing:1px;border-radius:var(--radius-sm);padding:10px 14px;cursor:pointer;white-space:nowrap">ATIVAR</button>
+      </div>
+    </div>
+    <div class="card">
       <div class="card-title">Conta</div>
       <div class="settings-item">
-        <div><div class="settings-label" id="settings-name">Prof. Thiago</div><div class="settings-sub">Professor PAAC</div></div>
+        <div><div class="settings-label" id="settings-name">Prof. Thiago</div><div class="settings-sub">Professor de História</div></div>
       </div>
       <div class="settings-item" style="border:none">
         <div><div class="settings-label" style="color:var(--red);cursor:pointer" onclick="logout()">Sair / Logout</div><div class="settings-sub">Encerra a sessão atual</div></div>
@@ -443,9 +522,9 @@ document.head.appendChild(link);
     <div class="card">
       <div class="card-title">Sobre</div>
       <div style="font-size:13px;color:var(--text2);line-height:1.8">
-        <p><strong style="color:var(--neon)">PAAC Gestão Acadêmica</strong></p>
+        <p><strong style="color:var(--neon)">Gestão Diário</strong></p>
         <p style="margin-top:8px">Sistema desenvolvido para gestão pedagógica e acompanhamento de alunos.</p>
-        <p style="margin-top:8px;color:var(--text3)">Versão 4.0 · 2025</p>
+        <p style="margin-top:8px;color:var(--text3)">Versão 5.0 · 2026</p>
       </div>
     </div>
   </div>
@@ -455,8 +534,8 @@ document.head.appendChild(link);
     <div class="nav-item active" id="nav-home" onclick="goTo('home')"><span class="nav-icon">🏠</span><span class="nav-label">Início</span></div>
     <div class="nav-item" id="nav-tutoria" onclick="goTo('tutoria')"><span class="nav-icon">🎓</span><span class="nav-label">Tutoria</span></div>
     <div class="nav-item" id="nav-aulas" onclick="goTo('aulas')"><span class="nav-icon">📚</span><span class="nav-label">Aulas</span></div>
-    <div class="nav-item" id="nav-atpcg" onclick="goTo('atpcg')"><span class="nav-icon">🏫</span><span class="nav-label">ATPCG</span></div>
-    <div class="nav-item" id="nav-projetos" onclick="goTo('projetos')"><span class="nav-icon">🚀</span><span class="nav-label">Projetos</span></div>
+    <div class="nav-item" id="nav-notas" onclick="goTo('notas')"><span class="nav-icon">📝</span><span class="nav-label">Notas</span></div>
+    <div class="nav-item" id="nav-metodologias" onclick="goTo('metodologias')"><span class="nav-icon">💡</span><span class="nav-label">Metodologias</span></div>
   </div>
 </div>
 
@@ -501,6 +580,26 @@ document.head.appendChild(link);
   </div>
 </div>
 
+<!-- MODAL: DIA DO CALENDÁRIO (lista de sessões do dia + agendar) -->
+<div class="modal-overlay" id="modal-dia" onclick="overlayClose(event,'modal-dia')">
+  <div class="modal">
+    <div class="modal-title" id="cd-data-label">Dia</div>
+    <div id="cd-lista"></div>
+    <button class="btn-primary" onclick="novaSessaoNesteDia()">+ NOVA SESSÃO NESTE DIA</button>
+    <button class="btn-cancel" onclick="closeModal('modal-dia')">Fechar</button>
+  </div>
+</div>
+
+<!-- MODAL: LISTA MESTRA DE ALUNOS -->
+<div class="modal-overlay" id="modal-lista-mestra" onclick="overlayClose(event,'modal-lista-mestra')">
+  <div class="modal">
+    <div class="modal-title">📋 Lista Mestra de Alunos</div>
+    <div style="font-size:11px;color:var(--text3);margin-bottom:10px">Quem já foi agendado neste bimestre</div>
+    <div id="lm-lista"></div>
+    <button class="btn-cancel" onclick="closeModal('modal-lista-mestra')">Fechar</button>
+  </div>
+</div>
+
 <!-- TELA FULLSCREEN: VISUALIZAR AULA COM PDF -->
 <div id="tela-aula" style="display:none;position:fixed;inset:0;background:var(--bg);z-index:300;flex-direction:column;">
   <div style="background:var(--bg2);border-bottom:1px solid var(--border);padding:12px 16px;display:flex;align-items:center;gap:12px;flex-shrink:0;">
@@ -525,6 +624,15 @@ document.head.appendChild(link);
       <div id="ta-upload-form">
         <input type="file" id="ta-file" accept=".pdf" class="form-input" style="padding:10px;margin-bottom:8px"/>
         <button class="btn-primary" onclick="uploadPDFAula()" style="margin-top:0">▶ SUBIR PDF (vale para todas as turmas do mesmo ano)</button>
+      </div>
+    </div>
+
+    <!-- METODOLOGIAS ATIVAS (sugestão por IA para o tema da aula) -->
+    <div style="padding:16px;background:var(--bg2);border-top:1px solid var(--border)">
+      <div class="card" style="padding:14px">
+        <div class="card-title">💡 Metodologias Ativas</div>
+        <button class="btn-primary" style="margin-top:0" id="btn-ia-metod" onclick="sugerirMetodologias()">Sugerir metodologias para o tema</button>
+        <div id="ta-metod-resultado" style="margin-top:12px"></div>
       </div>
     </div>
 
@@ -558,39 +666,25 @@ document.head.appendChild(link);
   </div>
 </div>
 
-<div class="modal-overlay" id="modal-atpcg" onclick="overlayClose(event,'modal-atpcg')">
+<div class="modal-overlay" id="modal-metodologia" onclick="overlayClose(event,'modal-metodologia')">
   <div class="modal">
-    <div class="modal-title" id="mc-title">Nova Reunião ATPCG</div>
-    <input type="hidden" id="c-id"/>
-    <div class="form-group"><label class="form-label">Data da Reunião</label><input class="form-input" type="date" id="c-data"/></div>
-    <div class="form-group"><label class="form-label">Pauta / Assunto</label><textarea class="form-input form-textarea" id="c-pauta"></textarea></div>
-    <div class="form-group"><label class="form-label">Decisões / Minuta</label><textarea class="form-input form-textarea" id="c-decisoes"></textarea></div>
-    <div class="form-group"><label class="form-label">Diretoria de Ensino</label><input class="form-input" id="c-diretoria"/></div>
-    <button class="btn-primary" onclick="saveAtpcg()">▶ SALVAR</button>
-    <button class="btn-danger" id="del-atpcg" onclick="deleteAtpcg()" style="display:none">✕ EXCLUIR</button>
-    <button class="btn-cancel" onclick="closeModal('modal-atpcg')">Cancelar</button>
-  </div>
-</div>
-
-<div class="modal-overlay" id="modal-projeto" onclick="overlayClose(event,'modal-projeto')">
-  <div class="modal">
-    <div class="modal-title" id="mp-title">Novo Projeto</div>
+    <div class="modal-title" id="mm-title">Nova Metodologia</div>
     <input type="hidden" id="p-id"/>
-    <div class="form-group"><label class="form-label">Nome do Projeto</label><input class="form-input" id="p-nome"/></div>
+    <div class="form-group"><label class="form-label">Nome da Metodologia</label><input class="form-input" id="p-nome"/></div>
     <div class="form-group"><label class="form-label">Disciplinas Envolvidas</label><input class="form-input" id="p-disc"/></div>
-    <div class="form-group"><label class="form-label">Objetivos e Metas</label><textarea class="form-input form-textarea" id="p-obj"></textarea></div>
-    <div class="form-group"><label class="form-label">Prazo de Entrega</label><input class="form-input" type="date" id="p-prazo"/></div>
+    <div class="form-group"><label class="form-label">Descrição / Como Aplicar</label><textarea class="form-input form-textarea" id="p-obj"></textarea></div>
+    <div class="form-group"><label class="form-label">Data de Aplicação</label><input class="form-input" type="date" id="p-prazo"/></div>
     <div class="form-group"><label class="form-label">Status</label>
       <select class="form-input" id="p-status">
-        <option value="planejamento">Planejamento</option>
-        <option value="em_andamento">Em Andamento</option>
-        <option value="concluido">Concluído</option>
-        <option value="cancelado">Cancelado</option>
+        <option value="planejamento">Ideia</option>
+        <option value="em_andamento">Testando</option>
+        <option value="concluido">Aplicada</option>
+        <option value="cancelado">Descartada</option>
       </select>
     </div>
-    <button class="btn-primary" onclick="saveProjeto()">▶ SALVAR</button>
-    <button class="btn-danger" id="del-projeto" onclick="deleteProjeto()" style="display:none">✕ EXCLUIR</button>
-    <button class="btn-cancel" onclick="closeModal('modal-projeto')">Cancelar</button>
+    <button class="btn-primary" onclick="saveMetodologia()">▶ SALVAR</button>
+    <button class="btn-danger" id="del-metodologia" onclick="deleteMetodologia()" style="display:none">✕ EXCLUIR</button>
+    <button class="btn-cancel" onclick="closeModal('modal-metodologia')">Cancelar</button>
   </div>
 </div>
 
@@ -618,6 +712,7 @@ let NAME = '';
 let curPage='home', curStatus='pendente';
 let curTurma=null, curAulaId=null;
 let fontSize=15;
+let curBimestre = localStorage.getItem('gd_bimestre') || '3º Bimestre';
 
 // HORÁRIO
 const HORARIO=[
@@ -690,8 +785,24 @@ function boot(nome, token){
   document.getElementById('setup-screen').style.display='none';
   document.getElementById('app').classList.add('visible');
   document.getElementById('fab-btn').style.display='flex';
+  document.getElementById('bimestre-global').value=curBimestre;
   loadSettings();
   loadHome();
+  iniciarMonitorNotificacoes();
+}
+
+// ── FILTRO DE BIMESTRE (global) ─────────────────────────
+// Filtra a VISUALIZAÇÃO de Aulas/Progressos/Tutoria pelo bimestre selecionado.
+// Nada é apagado no banco: registros de bimestres anteriores continuam lá,
+// só não entram no filtro `bimestre=eq.<atual>` das consultas.
+function mudarBimestreGlobal(v){
+  curBimestre = v;
+  localStorage.setItem('gd_bimestre', v);
+  const ntBim = document.getElementById('nt-bimestre');
+  if(ntBim) ntBim.value = v;
+  const loaders={home:loadHome,tutoria:loadTutoria,aulas:loadAulasPrincipal,notas:loadNotas,metodologias:loadMetodologias,diario:loadDiario,relatorios:loadRelatorios};
+  if(loaders[curPage]) loaders[curPage]();
+  toast(`Filtro alterado para ${v}`,'success');
 }
 
 function logout(){
@@ -724,15 +835,16 @@ function goTo(p){
   document.getElementById('page-'+p)?.classList.add('active');
   document.getElementById('nav-'+p)?.classList.add('active');
   curPage=p;
-  const titles={home:'Gestão Acadêmica',tutoria:'Tutoria',aulas:'Grade & Aulas',atpcg:'ATPCG',projetos:'Projetos',diario:'Diário',relatorios:'Relatórios',settings:'Configurações'};
-  document.getElementById('header-title').textContent=titles[p]||'PAAC';
-  const loaders={home:loadHome,tutoria:loadTutoria,aulas:loadAulasPrincipal,atpcg:loadAtpcg,projetos:loadProjetos,diario:loadDiario,relatorios:loadRelatorios};
+  const titles={home:'Gestão Acadêmica',tutoria:'Tutoria',aulas:'Grade & Aulas',notas:'Notas',metodologias:'Metodologias Ativas',diario:'Diário',relatorios:'Relatórios',settings:'Configurações'};
+  document.getElementById('header-title').textContent=titles[p]||'Gestão Diário';
+  const loaders={home:loadHome,tutoria:loadTutoria,aulas:loadAulasPrincipal,notas:loadNotas,metodologias:loadMetodologias,diario:loadDiario,relatorios:loadRelatorios};
   if(loaders[p]) loaders[p]();
 }
 
 function openFab(){
-  const map={home:'tutoria',tutoria:'tutoria',atpcg:'atpcg',projetos:'projeto',diario:'diario',relatorios:'tutoria'};
+  const map={home:'tutoria',tutoria:'tutoria',metodologias:'metodologia',diario:'diario',relatorios:'tutoria'};
   if(curPage==='aulas'){if(curTurma){openAulaDetalheNova();}else toast('Selecione uma turma primeiro','error');return;}
+  if(curPage==='notas'){adicionarLinhaNota();return;}
   openM(map[curPage]||'tutoria');
 }
 
@@ -742,11 +854,10 @@ function closeModal(id){document.getElementById(id).classList.remove('open');}
 // ── HOME ───────────────────────────────────────────────
 async function loadHome(){
   try{
-    const [tut,atpcg,proj,aulas]=await Promise.all([
-      api('sessoes_tutoria','GET',null,'limit=5').catch(()=>[]),
-      api('reunioes_atpcg','GET',null,'limit=3').catch(()=>[]),
+    const [tut,proj,aulas]=await Promise.all([
+      api('sessoes_tutoria','GET',null,`bimestre=eq.${curBimestre}&limit=5`).catch(()=>[]),
       api('projetos','GET',null,'limit=3').catch(()=>[]),
-      api('aulas_turma').catch(()=>[])
+      api('aulas_turma','GET',null,`bimestre=eq.${curBimestre}`).catch(()=>[])
     ]);
     // progresso geral
     const total=aulas.length||0;
@@ -757,15 +868,14 @@ async function loadHome(){
 
     const all=[
       ...tut.map(r=>({tipo:'tutoria',title:r.aluno_nome||'Aluno',sub:'Sessão de Tutoria',date:r.created_at})),
-      ...atpcg.map(r=>({tipo:'reuniao',title:'Reunião ATPCG',sub:(r.pauta_assunto||'').substring(0,40),date:r.created_at})),
-      ...proj.map(r=>({tipo:'projeto',title:r.nome_projeto||'Projeto',sub:r.status||'',date:r.created_at})),
+      ...proj.map(r=>({tipo:'projeto',title:r.nome_projeto||'Metodologia',sub:r.status||'',date:r.created_at})),
       ...aulas.filter(a=>a.status==='concluida').slice(0,3).map(r=>({tipo:'aula',title:`Aula ${r.numero_aula} — ${r.turma}`,sub:'Aula concluída',date:r.updated_at||r.created_at})),
     ].sort((a,b)=>new Date(b.date)-new Date(a.date)).slice(0,8);
 
     const el=document.getElementById('activities-list');
     if(!all.length){el.innerHTML=empty('📭','Nenhuma atividade ainda.');return;}
     el.innerHTML=all.map(a=>`
-      <div class="activity-item" onclick="goTo('${a.tipo==='reuniao'?'atpcg':a.tipo==='aula'?'aulas':a.tipo}')">
+      <div class="activity-item" onclick="goTo('${a.tipo==='aula'?'aulas':a.tipo==='projeto'?'metodologias':a.tipo}')">
         <div class="activity-dot ${a.tipo}"></div>
         <div class="activity-info"><div class="activity-title">${a.title}</div><div class="activity-sub">${a.sub}</div></div>
         <div class="activity-time">${fmtAgo(a.date)}</div>
@@ -805,7 +915,7 @@ function renderHorario(){
 async function renderTurmas(){
   let progMap={};
   try{
-    const rows=await api('aulas_turma');
+    const rows=await api('aulas_turma','GET',null,`bimestre=eq.${curBimestre}`);
     rows.forEach(r=>{
       if(!progMap[r.turma]) progMap[r.turma]={total:0,done:0};
       progMap[r.turma].total++;
@@ -849,10 +959,9 @@ async function loadAulasTurma(turma){
   try{
     // Determina grupo: 8ano ou 9ano
     const grupo=turma.startsWith('8')?'8ano':'9ano';
-    // Busca aulas do grupo
-    const rows=await api('aulas_turma','GET',null,`grupo=eq.${grupo}&order=numero_aula.asc`);
-    // Busca progresso específico desta turma
-    const progRows=await api('aulas_turma','GET',null,`turma=eq.${turma}`);
+    // Busca progresso específico desta turma, só do bimestre atual (registros de
+    // bimestres anteriores continuam no banco, apenas não entram nesta consulta)
+    const progRows=await api('aulas_turma','GET',null,`turma=eq.${turma}&bimestre=eq.${curBimestre}`);
 
     // Monta map de status por numero_aula para esta turma
     const statusMap={};
@@ -887,7 +996,7 @@ async function loadAulasTurma(turma){
 let curAulaCtx = null; // {num, turma, grupo, data}
 
 function abrirAulaDetalhe(num, turma, grupo, data) {
-  curAulaCtx = {num, turma, grupo, data};
+  curAulaCtx = {num, turma, grupo, data, bimestre: curBimestre};
   const tela = document.getElementById('tela-aula');
   document.getElementById('ta-titulo').textContent = `Aula ${num} — História`;
   document.getElementById('ta-turma').textContent = `Turma ${turma}`;
@@ -921,9 +1030,12 @@ async function carregarPDFAula(grupo, num) {
   const pdfInfo = document.getElementById('ta-pdf-info');
   pdfArea.innerHTML = '<div class="loading"><div class="spinner"></div>Buscando PDF...</div>';
 
+  // Pasta depende do bimestre em uso (cada bimestre tem sua própria pasta de PDFs,
+  // então trocar o filtro global de bimestre também troca de onde os PDFs são buscados).
+  const bimNum = (curAulaCtx?.bimestre || curBimestre).charAt(0);
   const pasta = grupo === '8ano'
-    ? 'Aulas/8%C2%BA%20Ano/2%C2%BABimestre'
-    : 'Aulas/9%C2%BA%20Ano/2%C2%BABimestre';
+    ? `Aulas/8%C2%BA%20Ano/${bimNum}%C2%BABimestre`
+    : `Aulas/9%C2%BA%20Ano/${bimNum}%C2%BABimestre`;
   const numStr = String(num).padStart(2, '0');
   const url = `${GITHUB_BASE}/${pasta}/Aula_${numStr}.pdf`;
   try {
@@ -941,7 +1053,7 @@ async function carregarPDFAula(grupo, num) {
         <div style="text-align:center;color:var(--text3);padding:30px">
           <div style="font-size:48px;margin-bottom:12px">📄</div>
           <div style="font-family:'Orbitron',sans-serif;font-size:12px">PDF não encontrado</div>
-          <div style="font-size:11px;margin-top:8px;line-height:1.7">Verifique se <span style="color:var(--neon)">Aula_${numStr}.pdf</span> está na pasta <span style="color:var(--neon)">${grupo==='8ano'?'Aulas/8º Ano/2ºBimestre':'Aulas/9º Ano/2ºBimestre'}</span> do GitHub.</div>
+          <div style="font-size:11px;margin-top:8px;line-height:1.7">Verifique se <span style="color:var(--neon)">Aula_${numStr}.pdf</span> está na pasta <span style="color:var(--neon)">${grupo==='8ano'?`Aulas/8º Ano/${bimNum}ºBimestre`:`Aulas/9º Ano/${bimNum}ºBimestre`}</span> do GitHub.</div>
           <a href="${url}" target="_blank" style="display:inline-block;margin-top:14px;color:var(--neon);font-size:11px;font-family:'Orbitron',sans-serif">↗ TENTAR MESMO ASSIM</a>
         </div>`;
       pdfInfo.innerHTML = ''; uploadForm.innerHTML = '';
@@ -968,7 +1080,8 @@ async function uploadPDFAula() {
   if (!file) { toast('Selecione um PDF', 'error'); return; }
   toast('Enviando...', '');
   try {
-    const path = `pdfs/${grupo}/aula_${num}.pdf`;
+    const bimSlug = (curAulaCtx.bimestre||curBimestre).replace(/\s/g,'').toLowerCase();
+    const path = `pdfs/${grupo}/${bimSlug}/aula_${num}.pdf`;
 
     // Tenta upsert (substitui se já existir)
     let up = await fetch(`${URL}/storage/v1/object/materiais/${path}`, {
@@ -1001,13 +1114,15 @@ async function uploadPDFAula() {
     }
 
     const arquivo_url = `${URL}/storage/v1/object/public/materiais/${path}`;
+    const bimestreAtual = curAulaCtx.bimestre || curBimestre;
 
-    // Salvar ou atualizar registro na tabela
-    const existing = await api('pdfs_aula','GET',null,`grupo=eq.${grupo}&numero_aula=eq.${num}`);
+    // Salvar ou atualizar registro na tabela (namespaced por bimestre, para não
+    // sobrescrever o PDF de uma "Aula 1" de um bimestre anterior)
+    const existing = await api('pdfs_aula','GET',null,`grupo=eq.${grupo}&numero_aula=eq.${num}&bimestre=eq.${bimestreAtual}`);
     if (existing.length) {
       await api('pdfs_aula','PATCH',{arquivo_url, nome:`Aula ${num}`},`id=eq.${existing[0].id}`);
     } else {
-      await api('pdfs_aula','POST',{grupo, numero_aula:num, arquivo_url, nome:`Aula ${num}`});
+      await api('pdfs_aula','POST',{grupo, numero_aula:num, bimestre:bimestreAtual, arquivo_url, nome:`Aula ${num}`});
     }
     toast('PDF enviado com sucesso!', 'success');
     carregarPDFAula(grupo, num);
@@ -1036,7 +1151,7 @@ async function saveAulaDetalhe() {
   const grupo = modal.dataset.grupo;
   const id = document.getElementById('ad-id').value;
   const body = {
-    numero_aula:num, turma, grupo,
+    numero_aula:num, turma, grupo, bimestre: curBimestre,
     pauta: document.getElementById('ad-pauta').value,
     onde_parei: document.getElementById('ad-parei').value,
     combinados: document.getElementById('ad-combinados').value,
@@ -1064,23 +1179,125 @@ function openAulaDetalheNova() {
   toast('Clique em uma aula da lista para abrir', 'error');
 }
 
+// ── IA (proxy via Edge Function) ───────────────────────
+// A chave da IA NÃO fica aqui: o PWA chama a Edge Function 'ia', que guarda a
+// chave no servidor. Aqui só montamos o pedido e mostramos o resultado.
+async function chamarIA(payload){
+  const r = await fetch(`${URL}/functions/v1/ia`,{
+    method:'POST',
+    headers:{
+      'apikey':SUPABASE_KEY,
+      'Authorization':'Bearer '+(USER_TOKEN||KEY),
+      'Content-Type':'application/json'
+    },
+    body:JSON.stringify(payload)
+  });
+  const data=await r.json().catch(()=>({}));
+  if(!r.ok||data.erro) throw new Error(data.erro||('Erro '+r.status));
+  return data.texto||'';
+}
+
+function escaparHtml(s){const d=document.createElement('div');d.textContent=s==null?'':s;return d.innerHTML;}
+
+async function sugerirMetodologias(){
+  const btn=document.getElementById('btn-ia-metod');
+  const out=document.getElementById('ta-metod-resultado');
+  if(!curAulaCtx){toast('Abra uma aula primeiro','error');return;}
+  const tema=(curAulaCtx.data?.pauta||'').trim() || `Aula ${curAulaCtx.num} de História`;
+  const orig=btn.textContent; btn.disabled=true; btn.textContent='Gerando...';
+  out.innerHTML='<div class="loading"><div class="spinner"></div>Pensando em metodologias...</div>';
+  try{
+    const serie = curAulaCtx.grupo==='8ano'?'8º ano':'9º ano';
+    const texto = await chamarIA({tipo:'metodologias',tema,serie});
+    out.innerHTML=`<div class="report-block"><h4>Sugestões para: ${escaparHtml(tema)}</h4><p style="white-space:pre-wrap">${escaparHtml(texto)}</p></div>`;
+  }catch(e){
+    out.innerHTML=`<div class="report-block" style="border-color:var(--red)"><p style="color:var(--red)">Erro: ${escaparHtml(e.message)}</p></div>`;
+  }finally{ btn.disabled=false; btn.textContent=orig; }
+}
+
+// ── NOTAS POR ALUNO (Historia) ──────────────────────────
+// Fonte de dados para a extensão "Lançamento de Notas SEDUC". A extensão lê
+// esta mesma tabela (notas_alunos) direto via REST do Supabase - ver
+// contrato exato de JSON nos comentários de cada função abaixo.
+// Ainda não há uma tela própria no PWA para chamar estas funções; ficam
+// prontas para uso quando construirmos a tela "Lançar Notas" ou para testar
+// via console por enquanto.
+
+// Lista as notas já lançadas de uma turma/bimestre (para exibir/editar no PWA).
+// Retorna: [{id, aluno_nome, turma, disciplina, bimestre, avaliacao_nome, nota, injetado}, ...]
+async function buscarNotasTurma(turma, bimestre, disciplina = 'Historia') {
+  const params = new URLSearchParams({
+    turma: `eq.${turma}`,
+    bimestre: `eq.${bimestre}`,
+    disciplina: `eq.${disciplina}`,
+    order: 'aluno_nome.asc',
+  });
+  return api('notas_alunos', 'GET', null, params.toString());
+}
+
+// Salva (cria ou atualiza) a nota de um aluno. Faz upsert pelo conjunto
+// (aluno_nome, turma, disciplina, bimestre, avaliacao_nome) - é a constraint
+// UNIQUE da tabela, então rodar de novo com o mesmo aluno+avaliação
+// substitui a nota anterior em vez de duplicar linha.
+async function salvarNota(alunoNome, turma, bimestre, notaValor, avaliacaoNome = 'Nota Bimestral', disciplina = 'Historia') {
+  const url = `${URL}/rest/v1/notas_alunos?on_conflict=aluno_nome,turma,disciplina,bimestre,avaliacao_nome`;
+  const resposta = await fetch(url, {
+    method: 'POST',
+    headers: {
+      apikey: SUPABASE_KEY,
+      Authorization: 'Bearer ' + (USER_TOKEN || KEY),
+      'Content-Type': 'application/json',
+      Prefer: 'resolution=merge-duplicates,return=representation',
+    },
+    body: JSON.stringify({
+      aluno_nome: alunoNome,
+      turma,
+      disciplina,
+      bimestre,
+      avaliacao_nome: avaliacaoNome,
+      nota: notaValor,
+    }),
+  });
+  if (!resposta.ok) throw new Error(await resposta.text());
+  return resposta.json();
+}
+
+// Marca notas como já injetadas no Sala do Futuro (chamada pela extensão
+// depois de preencher com sucesso, ou pelo PWA se quiser confirmar manualmente).
+async function marcarNotasInjetadas(ids) {
+  if (!ids?.length) return;
+  const url = `${URL}/rest/v1/notas_alunos?id=in.(${ids.join(',')})`;
+  const resposta = await fetch(url, {
+    method: 'PATCH',
+    headers: {
+      apikey: SUPABASE_KEY,
+      Authorization: 'Bearer ' + (USER_TOKEN || KEY),
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ injetado: true, injetado_em: new Date().toISOString() }),
+  });
+  if (!resposta.ok) throw new Error(await resposta.text());
+}
+
 // ── TUTORIA ────────────────────────────────────────────
 // ── TUTORIA — SISTEMA COMPLETO ──────────────────────────
-const ALUNOS = [
-  {nome:'Guilherme Nieves',turma:'1ºD'},{nome:'Pedro Antonio',turma:'2ºA'},{nome:'Gabrielle Vitória',turma:'2ºA'},
-  {nome:'Davidson Rodrigues',turma:'1ºB'},{nome:'Nicolas Pereira',turma:'1ºB'},{nome:'Gerlandier',turma:'1ºE'},
-  {nome:'Iasmin Martins',turma:'2ºA'},{nome:'Julia Rocha',turma:'2ºE'},{nome:'Maria Eduarda Souza',turma:'2ºA'},
-  {nome:'Laura Maria',turma:'2ºA'},{nome:'Rossy Gabriela',turma:'1ºA'},{nome:'Ana Luiza Rodrigues',turma:'2ºA'},
-  {nome:'Nicolas Tavares',turma:'1ºA'},{nome:'Matheus Santana',turma:'2ºC'},{nome:'Nycolas Cordeiro',turma:'1ºC'},
-  {nome:'João Pedro',turma:'1ºD'},{nome:'João Paulo',turma:'1ºD'},{nome:'Sofia Torres',turma:'2ºF'},
-  {nome:'Giovanna Rente',turma:'2ºA'},{nome:'Mateus Assunção',turma:'1ºA'},{nome:'Thabata',turma:'2ºD'},
-  {nome:'Julia Bigas',turma:'2ºD'},{nome:'Gabriel Albuquerque',turma:'2ºB'},{nome:'Julia Vieira',turma:'2ºB'},
-  {nome:'José Victor',turma:'2ºE'}
-];
+// Lista mestra de alunos vem do Supabase (tabela alunos_tutoria), não mais
+// hardcoded aqui — carregada por carregarAlunosTutoria() a cada entrada na aba.
+let ALUNOS = [];
 
 let curAluno = null;
 let allSessoes = [];
 let allAgendamentos = [];
+
+async function carregarAlunosTutoria(){
+  try{
+    const rows = await api('alunos_tutoria','GET',null,'order=nome.asc');
+    ALUNOS = rows.map(r=>({nome:r.nome, turma:r.turma}));
+  }catch(e){
+    ALUNOS = [];
+    toast('Erro ao carregar lista de alunos','error');
+  }
+}
 
 function populateAlunoSelects(){
   ['t-aluno','ag-aluno'].forEach(id=>{
@@ -1092,15 +1309,17 @@ function populateAlunoSelects(){
 }
 
 async function loadTutoria(){
-  populateAlunoSelects();
   document.getElementById('tut-view-alunos').style.display='block';
   document.getElementById('tut-view-aluno').style.display='none';
   curAluno=null;
+  await carregarAlunosTutoria();
+  populateAlunoSelects();
   try{
-    allSessoes=await api('sessoes_tutoria').catch(()=>[]);
-    allAgendamentos=await api('agendamentos_tutoria').catch(()=>[]);
+    allSessoes=await api('sessoes_tutoria','GET',null,`bimestre=eq.${curBimestre}`).catch(()=>[]);
+    allAgendamentos=await api('agendamentos_tutoria','GET',null,`bimestre=eq.${curBimestre}`).catch(()=>[]);
   }catch(e){}
   renderAlunos();
+  renderCalendarioTutoria();
 }
 
 function renderAlunos(filtro=''){
@@ -1128,6 +1347,85 @@ function renderAlunos(filtro=''){
 
 function filtrarAlunos(){
   renderAlunos(document.getElementById('tut-busca').value);
+}
+
+// ── CALENDÁRIO DE TUTORIA ───────────────────────────────
+let calRefDate = new Date();
+const MESES_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
+
+function renderCalendarioTutoria(){
+  const grid = document.getElementById('cal-grid');
+  if(!grid) return;
+  const ano = calRefDate.getFullYear(), mes = calRefDate.getMonth();
+  document.getElementById('cal-mes-label').textContent = `${MESES_PT[mes]} ${ano}`;
+
+  const primeiroDia = new Date(ano, mes, 1);
+  const inicioSemana = primeiroDia.getDay();
+  const diasNoMes = new Date(ano, mes+1, 0).getDate();
+  const hojeStr = new Date().toDateString();
+  const diasComAgenda = new Set(allAgendamentos.map(a=>a.data_agendamento));
+
+  let html = ['D','S','T','Q','Q','S','S'].map(d=>`<div class="cal-dow">${d}</div>`).join('');
+  for(let i=0;i<inicioSemana;i++) html += `<div class="cal-dia outro-mes"></div>`;
+  for(let d=1; d<=diasNoMes; d++){
+    const dataObj = new Date(ano, mes, d);
+    const iso = `${ano}-${String(mes+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const isHoje = dataObj.toDateString()===hojeStr;
+    const temAgenda = diasComAgenda.has(iso);
+    html += `<div class="cal-dia ${isHoje?'hoje':''} ${temAgenda?'tem-agenda':''}" onclick="abrirDiaCalendario('${iso}')">${d}</div>`;
+  }
+  grid.innerHTML = html;
+}
+
+function calMudarMes(delta){
+  calRefDate = new Date(calRefDate.getFullYear(), calRefDate.getMonth()+delta, 1);
+  renderCalendarioTutoria();
+}
+
+function abrirDiaCalendario(iso){
+  const doDia = allAgendamentos.filter(a=>a.data_agendamento===iso).sort((a,b)=>(a.horario||'').localeCompare(b.horario||''));
+  document.getElementById('cd-data-label').textContent = fmtFull(iso);
+  const el = document.getElementById('cd-lista');
+  if(!doDia.length){
+    el.innerHTML = '<p style="font-size:12px;color:var(--text3);margin-bottom:10px">Nenhuma sessão agendada neste dia.</p>';
+  }else{
+    el.innerHTML = doDia.map(a=>`
+      <div class="activity-item" onclick='closeModal("modal-dia");editarAgendamento(${esc(a)})'>
+        <div class="activity-dot reuniao"></div>
+        <div class="activity-info"><div class="activity-title">${a.aluno_nome}${a.horario?' — '+a.horario:''}</div><div class="activity-sub">${a.observacao||'Sem observação'}</div></div>
+      </div>`).join('');
+  }
+  document.getElementById('modal-dia').dataset.iso = iso;
+  document.getElementById('modal-dia').classList.add('open');
+}
+
+function novaSessaoNesteDia(){
+  const iso = document.getElementById('modal-dia').dataset.iso;
+  closeModal('modal-dia');
+  agendarTutoriaAluno();
+  document.getElementById('ag-data').value = iso;
+}
+
+// ── LISTA MESTRA DE ALUNOS ──────────────────────────────
+function abrirListaMestra(){
+  const el = document.getElementById('lm-lista');
+  const agendadosSet = new Set(allAgendamentos.map(a=>a.aluno_nome));
+  const ordenado = [...ALUNOS].sort((a,b)=>a.nome.localeCompare(b.nome));
+  if(!ordenado.length){
+    el.innerHTML = empty('📋','Nenhum aluno cadastrado ainda.');
+  }else{
+    el.innerHTML = ordenado.map(a=>{
+      const ok = agendadosSet.has(a.nome);
+      return `<div class="list-item" onclick='closeModal("modal-lista-mestra");abrirPerfilAluno(${JSON.stringify(a).replace(/'/g,"&#39;")})'>
+        <div class="list-item-top">
+          <div class="list-item-name">${a.nome}</div>
+          <span class="badge ${ok?'green':'yellow'}">${ok?'✅ Agendado':'⚠️ Pendente'}</span>
+        </div>
+        <div class="list-item-sub">${a.turma}</div>
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('modal-lista-mestra').classList.add('open');
 }
 
 async function abrirPerfilAluno(aluno){
@@ -1216,11 +1514,12 @@ async function saveAgendamento(){
     observacao:document.getElementById('ag-obs').value
   };
   if(!body.aluno_nome||!body.data_agendamento){toast('Preencha aluno e data','error');return;}
+  if(!id) body.bimestre = curBimestre;
   try{
     if(id) await api('agendamentos_tutoria','PATCH',body,'id=eq.'+id);
     else await api('agendamentos_tutoria','POST',body);
     closeModal('modal-agendar');toast('Agendamento salvo!','success');
-    allAgendamentos=await api('agendamentos_tutoria').catch(()=>[]);
+    allAgendamentos=await api('agendamentos_tutoria','GET',null,`bimestre=eq.${curBimestre}`).catch(()=>[]);
     if(curAluno) abrirPerfilAluno(curAluno);
   }catch(e){toast('Erro: '+e.message,'error');}
 }
@@ -1231,7 +1530,7 @@ async function deleteAgendamento(){
   try{
     await api('agendamentos_tutoria','DELETE',null,'id=eq.'+id);
     closeModal('modal-agendar');toast('Cancelado','success');
-    allAgendamentos=await api('agendamentos_tutoria').catch(()=>[]);
+    allAgendamentos=await api('agendamentos_tutoria','GET',null,`bimestre=eq.${curBimestre}`).catch(()=>[]);
     if(curAluno) abrirPerfilAluno(curAluno);
   }catch(e){toast('Erro','error');}
 }
@@ -1245,11 +1544,12 @@ async function saveTutoria(){
     combinados_proxima:document.getElementById('t-combinados').value
   };
   if(!body.aluno_nome){toast('Selecione um aluno','error');return;}
+  if(!id) body.bimestre = curBimestre;
   try{
     if(id) await api('sessoes_tutoria','PATCH',body,'id=eq.'+id);
     else await api('sessoes_tutoria','POST',body);
     closeModal('modal-tutoria');toast('Sessão salva!','success');
-    allSessoes=await api('sessoes_tutoria').catch(()=>[]);
+    allSessoes=await api('sessoes_tutoria','GET',null,`bimestre=eq.${curBimestre}`).catch(()=>[]);
     if(curAluno) abrirPerfilAluno(curAluno);
     else renderAlunos();
     loadHome();
@@ -1262,76 +1562,152 @@ async function deleteTutoria(){
   try{
     await api('sessoes_tutoria','DELETE',null,'id=eq.'+id);
     closeModal('modal-tutoria');toast('Excluído','success');
-    allSessoes=await api('sessoes_tutoria').catch(()=>[]);
+    allSessoes=await api('sessoes_tutoria','GET',null,`bimestre=eq.${curBimestre}`).catch(()=>[]);
     if(curAluno) abrirPerfilAluno(curAluno);
     else renderAlunos();
   }catch(e){toast('Erro','error');}
 }
 
-// ── ATPCG ──────────────────────────────────────────────
-async function loadAtpcg(){
-  const el=document.getElementById('atpcg-list');
+// ── NOTAS (aba — lançamento por aluno, consumido pela extensão) ────────
+function populateTurmaSelectNotas(){
+  const el=document.getElementById('nt-turma');
+  if(!el||el.options.length>1) return;
+  [...TURMAS_1,...TURMAS_2].forEach(t=>{
+    const o=document.createElement('option'); o.value=t; o.textContent=t; el.appendChild(o);
+  });
+}
+
+let notasLinhas = []; // [{nome, nota}]
+
+function loadNotas(){
+  populateTurmaSelectNotas();
+  document.getElementById('nt-bimestre').value = curBimestre;
+  renderLinhasNotas();
+  const turma=document.getElementById('nt-turma').value;
+  if(turma) carregarNotasTurma(); else document.getElementById('nt-lista-salvas').innerHTML=empty('📝','Selecione uma turma para ver as notas lançadas.');
+}
+
+function adicionarLinhaNota(nome=''){
+  notasLinhas.push({nome, nota:''});
+  renderLinhasNotas();
+}
+
+function gerarLinhasNotas(){
+  const texto=document.getElementById('nt-colar').value;
+  const nomes=texto.split('\n').map(n=>n.trim()).filter(Boolean);
+  if(!nomes.length){toast('Cole ao menos um nome','error');return;}
+  nomes.forEach(n=>notasLinhas.push({nome:n,nota:''}));
+  document.getElementById('nt-colar').value='';
+  renderLinhasNotas();
+}
+
+function atualizarLinhaNota(i,campo,valor){
+  notasLinhas[i][campo]=valor;
+}
+
+function removerLinhaNota(i){
+  notasLinhas.splice(i,1);
+  renderLinhasNotas();
+}
+
+function renderLinhasNotas(){
+  const el=document.getElementById('nt-linhas');
+  if(!notasLinhas.length){el.innerHTML='<p style="font-size:12px;color:var(--text3);margin-bottom:10px">Nenhum aluno na lista. Cole os nomes acima ou adicione manualmente.</p>';return;}
+  el.innerHTML=notasLinhas.map((l,i)=>`
+    <div style="display:flex;gap:8px;margin-bottom:8px;align-items:center">
+      <input class="form-input" style="flex:2" placeholder="Nome do aluno" value="${escaparHtml(l.nome)}" oninput="atualizarLinhaNota(${i},'nome',this.value)"/>
+      <input class="form-input" type="number" step="0.1" min="0" max="10" style="flex:1" placeholder="Nota" value="${l.nota}" oninput="atualizarLinhaNota(${i},'nota',this.value)"/>
+      <div onclick="removerLinhaNota(${i})" style="color:var(--red);cursor:pointer;font-size:16px;padding:0 4px">✕</div>
+    </div>`).join('');
+}
+
+async function salvarNotasTurma(){
+  const turma=document.getElementById('nt-turma').value;
+  const bimestre=document.getElementById('nt-bimestre').value;
+  const avaliacao=document.getElementById('nt-avaliacao').value.trim()||'Nota Bimestral';
+  if(!turma){toast('Selecione a turma','error');return;}
+  const validas=notasLinhas.filter(l=>l.nome.trim()&&l.nota!=='');
+  if(!validas.length){toast('Preencha ao menos um aluno com nota','error');return;}
+  try{
+    for(const l of validas){
+      await salvarNota(l.nome.trim(), turma, bimestre, parseFloat(l.nota), avaliacao);
+    }
+    toast(`${validas.length} nota(s) salva(s)!`,'success');
+    notasLinhas=[];
+    renderLinhasNotas();
+    carregarNotasTurma();
+  }catch(e){toast('Erro: '+e.message,'error');}
+}
+
+async function carregarNotasTurma(){
+  const turma=document.getElementById('nt-turma').value;
+  const bimestre=document.getElementById('nt-bimestre').value;
+  const el=document.getElementById('nt-lista-salvas');
+  if(!turma){el.innerHTML=empty('📝','Selecione uma turma.');return;}
   el.innerHTML=loading();
   try{
-    const rows=await api('reunioes_atpcg');
-    if(!rows.length){el.innerHTML=empty('🏫','Nenhuma reunião registrada ainda.');return;}
+    const rows=await buscarNotasTurma(turma,bimestre);
+    if(!rows.length){el.innerHTML=empty('📭','Nenhuma nota lançada ainda para esta turma/bimestre.');return;}
     el.innerHTML=rows.map(r=>`
-      <div class="list-item" style="--neon:var(--purple)" onclick='openM("atpcg",${esc(r)})'>
-        <div class="list-item-top"><div class="list-item-name">${fmtFull(r.data_reuniao||r.created_at)}</div><span class="badge purple">ATPCG</span></div>
-        <div class="list-item-sub">${(r.pauta_assunto||'Sem pauta').substring(0,70)}</div>
+      <div class="list-item" style="--neon:var(--green)">
+        <div class="list-item-top">
+          <div class="list-item-name">${escaparHtml(r.aluno_nome)}</div>
+          <span class="badge ${r.injetado?'green':'cyan'}">${r.injetado?'✅ Injetada':'⏳ Pendente'}</span>
+        </div>
+        <div class="list-item-sub" style="display:flex;justify-content:space-between;align-items:center">
+          <span>${escaparHtml(r.avaliacao_nome)} · Nota: <strong style="color:var(--text)">${r.nota??'—'}</strong></span>
+          <span onclick="excluirNota(${r.id})" style="color:var(--red);cursor:pointer">✕ Excluir</span>
+        </div>
       </div>`).join('');
   }catch(e){el.innerHTML=err(e);}
 }
-async function saveAtpcg(){
-  const id=document.getElementById('c-id').value;
-  const body={data_reuniao:document.getElementById('c-data').value,pauta_assunto:document.getElementById('c-pauta').value,decisoes_minuta:document.getElementById('c-decisoes').value,diretoria_ensino:document.getElementById('c-diretoria').value};
+
+async function excluirNota(id){
+  if(!confirm('Excluir esta nota?'))return;
   try{
-    if(id) await api('reunioes_atpcg','PATCH',body,'id=eq.'+id);
-    else await api('reunioes_atpcg','POST',body);
-    closeModal('modal-atpcg');toast('Salvo!','success');loadAtpcg();
+    await api('notas_alunos','DELETE',null,'id=eq.'+id);
+    toast('Nota excluída','success');
+    carregarNotasTurma();
   }catch(e){toast('Erro: '+e.message,'error');}
 }
-async function deleteAtpcg(){
-  const id=document.getElementById('c-id').value;
-  if(!id||!confirm('Excluir?'))return;
-  try{await api('reunioes_atpcg','DELETE',null,'id=eq.'+id);closeModal('modal-atpcg');toast('Excluído','success');loadAtpcg();}catch(e){toast('Erro','error');}
-}
 
-// ── PROJETOS ───────────────────────────────────────────
-async function loadProjetos(){
-  const el=document.getElementById('projetos-list');
+// ── METODOLOGIAS ATIVAS (aba) ──────────────────────────
+async function loadMetodologias(){
+  const el=document.getElementById('metodologias-list');
   el.innerHTML=loading();
   try{
     const rows=await api('projetos');
-    if(!rows.length){el.innerHTML=empty('🚀','Nenhum projeto registrado ainda.');return;}
+    if(!rows.length){el.innerHTML=empty('💡','Nenhuma metodologia registrada ainda.');return;}
     const sc={planejamento:'cyan',em_andamento:'yellow',concluido:'green',cancelado:'red'};
+    const sl={planejamento:'Ideia',em_andamento:'Testando',concluido:'Aplicada',cancelado:'Descartada'};
     el.innerHTML=rows.map(r=>`
-      <div class="list-item" style="--neon:var(--yellow)" onclick='openM("projeto",${esc(r)})'>
-        <div class="list-item-top"><div class="list-item-name">${r.nome_projeto||'Projeto'}</div><span class="badge ${sc[r.status]||'cyan'}">${r.status||''}</span></div>
+      <div class="list-item" style="--neon:var(--yellow)" onclick='openM("metodologia",${esc(r)})'>
+        <div class="list-item-top"><div class="list-item-name">${r.nome_projeto||'Metodologia'}</div><span class="badge ${sc[r.status]||'cyan'}">${sl[r.status]||r.status||''}</span></div>
         <div class="list-item-sub">${(r.objetivos_metas||'').substring(0,60)}</div>
         ${r.prazo_entrega?`<div class="list-item-sub" style="color:var(--yellow);margin-top:4px">📅 ${fmtFull(r.prazo_entrega)}</div>`:''}
       </div>`).join('');
   }catch(e){el.innerHTML=err(e);}
 }
-async function saveProjeto(){
+async function saveMetodologia(){
   const id=document.getElementById('p-id').value;
   const body={nome_projeto:document.getElementById('p-nome').value,disciplinas_envolvidas:document.getElementById('p-disc').value,objetivos_metas:document.getElementById('p-obj').value,prazo_entrega:document.getElementById('p-prazo').value||null,status:document.getElementById('p-status').value};
   try{
     if(id) await api('projetos','PATCH',body,'id=eq.'+id);
     else await api('projetos','POST',body);
-    closeModal('modal-projeto');toast('Salvo!','success');loadProjetos();
+    closeModal('modal-metodologia');toast('Salvo!','success');loadMetodologias();
   }catch(e){toast('Erro: '+e.message,'error');}
 }
-async function deleteProjeto(){
+async function deleteMetodologia(){
   const id=document.getElementById('p-id').value;
   if(!id||!confirm('Excluir?'))return;
-  try{await api('projetos','DELETE',null,'id=eq.'+id);closeModal('modal-projeto');toast('Excluído','success');loadProjetos();}catch(e){toast('Erro','error');}
+  try{await api('projetos','DELETE',null,'id=eq.'+id);closeModal('modal-metodologia');toast('Excluído','success');loadMetodologias();}catch(e){toast('Erro','error');}
 }
 
 // ── DIÁRIO ─────────────────────────────────────────────
 function getDiario(){return JSON.parse(localStorage.getItem('paac_diario')||'[]');}
 function setDiario(v){localStorage.setItem('paac_diario',JSON.stringify(v));}
 function loadDiario(){
+  carregarLembretes();
   const el=document.getElementById('diario-list');
   const rows=getDiario().sort((a,b)=>new Date(b.created_at)-new Date(a.created_at));
   if(!rows.length){el.innerHTML=empty('📓','Nenhuma entrada ainda.');return;}
@@ -1340,6 +1716,60 @@ function loadDiario(){
       <div class="list-item-top"><div class="list-item-name">${r.titulo||'Sem título'}</div><span class="badge green">${fmtAgo(r.created_at)}</span></div>
       <div class="list-item-sub">${(r.texto||'').substring(0,60)}</div>
     </div>`).join('');
+}
+
+// ── LEMBRETES ───────────────────────────────────────────
+async function carregarLembretes(){
+  const el=document.getElementById('lb-lista');
+  if(!el) return;
+  el.innerHTML=loading();
+  try{
+    const rows=await api('lembretes','GET',null,'order=data_hora.asc');
+    if(!rows.length){el.innerHTML=empty('⏰','Nenhum lembrete cadastrado.');return;}
+    const agora=new Date();
+    el.innerHTML=rows.map(r=>`
+      <div class="activity-item">
+        <div class="activity-dot ${new Date(r.data_hora)<agora?'reuniao':'tutoria'}"></div>
+        <div class="activity-info"><div class="activity-title">${escaparHtml(r.texto)}</div><div class="activity-sub">${fmtDataHora(r.data_hora)}</div></div>
+        <div onclick="excluirLembrete(${r.id})" style="color:var(--red);cursor:pointer;font-size:14px;padding:0 6px">✕</div>
+      </div>`).join('');
+  }catch(e){el.innerHTML=err(e);}
+}
+
+async function salvarLembrete(){
+  const texto=document.getElementById('lb-texto').value.trim();
+  const data=document.getElementById('lb-data').value;
+  const hora=document.getElementById('lb-hora').value || '08:00';
+  if(!texto||!data){toast('Preencha o texto e a data','error');return;}
+  try{
+    // Monta a data/hora como horário LOCAL do professor (new Date com componentes
+    // separados usa o fuso do dispositivo) antes de converter para UTC via
+    // toISOString() - evita que "09:30" vire "09:30 UTC" (defasagem de 3h em SP).
+    const [ano,mes,dia] = data.split('-').map(Number);
+    const [h,m] = hora.split(':').map(Number);
+    const dataHoraLocal = new Date(ano, mes-1, dia, h, m);
+    await api('lembretes','POST',{texto, data_hora: dataHoraLocal.toISOString()});
+    document.getElementById('lb-texto').value='';
+    document.getElementById('lb-data').value='';
+    document.getElementById('lb-hora').value='';
+    toast('Lembrete salvo!','success');
+    carregarLembretes();
+  }catch(e){toast('Erro: '+e.message,'error');}
+}
+
+async function excluirLembrete(id){
+  if(!confirm('Excluir este lembrete?'))return;
+  try{
+    await api('lembretes','DELETE',null,'id=eq.'+id);
+    toast('Excluído','success');
+    carregarLembretes();
+  }catch(e){toast('Erro: '+e.message,'error');}
+}
+
+function fmtDataHora(iso){
+  if(!iso) return '';
+  const d=new Date(iso);
+  return d.toLocaleDateString('pt-BR',{day:'2-digit',month:'short'}) + ' às ' + d.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
 }
 function saveDiario(){
   const id=document.getElementById('d-id').value;
@@ -1359,11 +1789,11 @@ async function loadRelatorios(){
   const el=document.getElementById('relatorios-content');
   el.innerHTML=loading();
   try{
-    const [tut,atpcg,proj,aulas]=await Promise.all([
-      api('sessoes_tutoria').catch(()=>[]),
-      api('reunioes_atpcg').catch(()=>[]),
+    const [tut,notas,proj,aulas]=await Promise.all([
+      api('sessoes_tutoria','GET',null,`bimestre=eq.${curBimestre}`).catch(()=>[]),
+      api('notas_alunos').catch(()=>[]),
       api('projetos').catch(()=>[]),
-      api('aulas_turma').catch(()=>[])
+      api('aulas_turma','GET',null,`bimestre=eq.${curBimestre}`).catch(()=>[])
     ]);
     const conc=aulas.filter(a=>a.status==='concluida').length;
     // progresso por turma
@@ -1376,8 +1806,8 @@ async function loadRelatorios(){
         <div class="card-title">Resumo Geral</div>
         <div class="stat-grid">
           <div class="stat-card"><div style="font-size:24px">🎓</div><div class="stat-num" style="color:var(--neon)">${tut.length}</div><div class="stat-label">Tutorias</div></div>
-          <div class="stat-card"><div style="font-size:24px">🏫</div><div class="stat-num" style="color:var(--purple)">${atpcg.length}</div><div class="stat-label">Reuniões</div></div>
-          <div class="stat-card"><div style="font-size:24px">🚀</div><div class="stat-num" style="color:var(--yellow)">${proj.length}</div><div class="stat-label">Projetos</div></div>
+          <div class="stat-card"><div style="font-size:24px">📝</div><div class="stat-num" style="color:var(--purple)">${notas.length}</div><div class="stat-label">Notas</div></div>
+          <div class="stat-card"><div style="font-size:24px">💡</div><div class="stat-num" style="color:var(--yellow)">${proj.length}</div><div class="stat-label">Metodologias</div></div>
           <div class="stat-card"><div style="font-size:24px">✅</div><div class="stat-num" style="color:var(--green)">${conc}</div><div class="stat-label">Aulas OK</div></div>
         </div>
       </div>
@@ -1409,6 +1839,141 @@ function loadSettings(){
   const f=parseInt(localStorage.getItem('paac_font')||'15');
   setTheme(t,false);
   setFontSizeDirect(f,false);
+  atualizarStatusNotificacao();
+}
+
+// ── NOTIFICAÇÕES DE CHAMADA ─────────────────────────────
+// Dois níveis, complementares:
+//  1. PUSH REAL (Bloco 5): o navegador do celular assina um "push subscription"
+//     e salva no Supabase (tabela push_subscriptions). Uma Edge Function
+//     ('push-chamada'), acionada por cron a cada minuto, cruza a grade
+//     (tabela grade_horaria) com o horário e dispara o push 20min após o início
+//     da aula — funciona mesmo com o app FECHADO / celular bloqueado.
+//  2. MOTOR LOCAL (fallback): se o push não estiver ativo, um setInterval faz o
+//     mesmo cálculo enquanto o app está aberto. Quando o push está ativo, o
+//     motor local desliga para não notificar em dobro.
+// Chave pública VAPID (par gerado só para este projeto). É pública por design;
+// a chave privada correspondente fica APENAS como secret da Edge Function.
+const VAPID_PUBLIC_KEY = 'BCPwUHglQB2lQiKWh1BdgrfGe9E0TMACcpiS9tQpDzER7pgjir_DGkotXlGxezhxUdrpT2HLfZ18slccW-tvbHA';
+const DIA_SEMANA_PARA_CHAVE = {1:'seg',2:'ter',3:'qua',4:'qui',5:'sex'};
+let intervalNotificacoes = null;
+
+function pushAtivo(){ return localStorage.getItem('push_ativo')==='1'; }
+
+function atualizarStatusNotificacao(){
+  const btn = document.getElementById('btn-notif');
+  const sub = document.getElementById('notif-status-sub');
+  if(!btn) return;
+  if(!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)){
+    btn.textContent='INDISPONÍVEL'; btn.disabled=true;
+    sub.textContent='Seu navegador não suporta notificações push.';
+    return;
+  }
+  if(Notification.permission==='granted' && pushAtivo()){
+    btn.textContent='✅ ATIVO'; btn.disabled=true;
+    sub.textContent='Push real ativo. Você recebe o alerta 20min após o início da aula, mesmo com o app fechado.';
+  }else if(Notification.permission==='denied'){
+    btn.textContent='BLOQUEADO'; btn.disabled=true;
+    sub.textContent='Notificações bloqueadas nas configurações do navegador/celular.';
+  }else{
+    btn.textContent='ATIVAR'; btn.disabled=false;
+    sub.textContent='Toque para ativar os alertas de chamada (funciona com o app fechado).';
+  }
+}
+
+// Converte a chave VAPID (base64url) para o Uint8Array que o pushManager exige.
+function urlBase64ToUint8Array(base64String){
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding).replace(/-/g,'+').replace(/_/g,'/');
+  const raw = atob(base64);
+  const arr = new Uint8Array(raw.length);
+  for(let i=0;i<raw.length;i++) arr[i]=raw.charCodeAt(i);
+  return arr;
+}
+
+async function pedirPermissaoNotificacao(){
+  if(!('Notification' in window) || !('serviceWorker' in navigator) || !('PushManager' in window)){
+    toast('Push não suportado neste navegador','error'); return;
+  }
+  const btn = document.getElementById('btn-notif');
+  btn.disabled = true; btn.textContent = 'ATIVANDO...';
+  try{
+    const perm = await Notification.requestPermission();
+    if(perm!=='granted'){ toast('Permissão não concedida','error'); atualizarStatusNotificacao(); return; }
+    await ativarPushReal();
+    localStorage.setItem('push_ativo','1');
+    toast('Alertas de chamada ativados!','success');
+  }catch(e){
+    toast('Erro ao ativar push: '+e.message,'error');
+  }finally{
+    atualizarStatusNotificacao();
+  }
+}
+
+// Assina o push no navegador e salva a subscription no Supabase (upsert por
+// endpoint, para não duplicar se o professor reativar no mesmo aparelho).
+async function ativarPushReal(){
+  const reg = await navigator.serviceWorker.ready;
+  let sub = await reg.pushManager.getSubscription();
+  if(!sub){
+    sub = await reg.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: urlBase64ToUint8Array(VAPID_PUBLIC_KEY)
+    });
+  }
+  const j = sub.toJSON();
+  const url = `${URL}/rest/v1/push_subscriptions?on_conflict=endpoint`;
+  const r = await fetch(url, {
+    method:'POST',
+    headers:{
+      apikey: SUPABASE_KEY,
+      Authorization: 'Bearer '+(USER_TOKEN||KEY),
+      'Content-Type':'application/json',
+      Prefer:'resolution=merge-duplicates,return=minimal'
+    },
+    body: JSON.stringify({ endpoint: j.endpoint, p256dh: j.keys.p256dh, auth: j.keys.auth })
+  });
+  if(!r.ok) throw new Error(await r.text());
+}
+
+function checarNotificacoesAula(agora=new Date()){
+  if(pushAtivo()) return; // push real cuida disso no servidor - motor local desliga
+  if(!('Notification' in window) || Notification.permission!=='granted') return;
+  const diaKey = DIA_SEMANA_PARA_CHAVE[agora.getDay()];
+  if(!diaKey) return; // fim de semana, sem aulas
+
+  HORARIO.forEach(bloco=>{
+    const turma = bloco[diaKey];
+    if(!turma || turma==='—') return;
+    const [h,m] = bloco.hora.split('-')[0].split(':').map(Number);
+    const alvo = new Date(agora.getFullYear(), agora.getMonth(), agora.getDate(), h, m + 20);
+    const diff = agora - alvo;
+    if(diff>=0 && diff<60000){
+      const chave = `notif_chamada_${agora.toDateString()}_${bloco.hora}_${turma}`;
+      if(localStorage.getItem(chave)) return;
+      // Só marca como enviada depois que a notificação REALMENTE disparou -
+      // se falhar (ex: SW ainda não pronto), tenta de novo no próximo tick.
+      dispararNotificacaoChamada(turma, bloco.hora).then(()=>{
+        localStorage.setItem(chave,'1');
+      }).catch(()=>{});
+    }
+  });
+}
+
+function dispararNotificacaoChamada(turma, hora){
+  if(!navigator.serviceWorker?.ready) return Promise.resolve();
+  return navigator.serviceWorker.ready.then(reg=>reg.showNotification('📋 Hora da Chamada', {
+    body: `Turma ${turma} — aula das ${hora.split('-')[0]}. Não esqueça de fazer a chamada!`,
+    icon: 'https://img.icons8.com/fluency/192/graduation-cap.png',
+    tag: `chamada-${turma}-${hora}`,
+    data: { url: 'https://saladofuturoprofessor.educacao.sp.gov.br' }
+  }));
+}
+
+function iniciarMonitorNotificacoes(){
+  if(intervalNotificacoes) clearInterval(intervalNotificacoes);
+  checarNotificacoesAula();
+  intervalNotificacoes = setInterval(()=>checarNotificacoesAula(), 60000);
 }
 function setTheme(t,save=true){
   document.body.className=t==='light'?'theme-light':t==='dark'?'theme-dark':'';
@@ -1440,24 +2005,15 @@ function openM(name,data=null){
     document.getElementById('mt-title').textContent=editing?'Editar Sessão':'Nova Sessão de Tutoria';
     document.getElementById('del-tutoria').style.display=editing?'block':'none';
   }
-  if(name==='atpcg'){
-    document.getElementById('c-id').value=data?.id||'';
-    document.getElementById('c-data').value=data?.data_reuniao?.split('T')[0]||new Date().toISOString().split('T')[0];
-    document.getElementById('c-pauta').value=data?.pauta_assunto||'';
-    document.getElementById('c-decisoes').value=data?.decisoes_minuta||'';
-    document.getElementById('c-diretoria').value=data?.diretoria_ensino||'';
-    document.getElementById('mc-title').textContent=editing?'Editar Reunião':'Nova Reunião ATPCG';
-    document.getElementById('del-atpcg').style.display=editing?'block':'none';
-  }
-  if(name==='projeto'){
+  if(name==='metodologia'){
     document.getElementById('p-id').value=data?.id||'';
     document.getElementById('p-nome').value=data?.nome_projeto||'';
     document.getElementById('p-disc').value=data?.disciplinas_envolvidas||'';
     document.getElementById('p-obj').value=data?.objetivos_metas||'';
     document.getElementById('p-prazo').value=data?.prazo_entrega?.split('T')[0]||'';
     document.getElementById('p-status').value=data?.status||'planejamento';
-    document.getElementById('mp-title').textContent=editing?'Editar Projeto':'Novo Projeto';
-    document.getElementById('del-projeto').style.display=editing?'block':'none';
+    document.getElementById('mm-title').textContent=editing?'Editar Metodologia':'Nova Metodologia';
+    document.getElementById('del-metodologia').style.display=editing?'block':'none';
   }
   if(name==='diario'){
     document.getElementById('d-id').value=data?.id||'';

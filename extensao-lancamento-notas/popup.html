@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<title>Lançamento de Notas SEDUC</title>
+<style>
+  body { font-family: "Segoe UI", Arial, sans-serif; width: 340px; padding: 14px; color: #1c2b3a; margin: 0; }
+  h1 { font-size: 14px; margin: 0 0 4px 0; }
+  p.dica { font-size: 11px; color: #64748b; margin: 0 0 10px 0; }
+  select, button, input {
+    width: 100%; padding: 7px; margin-bottom: 8px; border-radius: 6px;
+    border: 1px solid #e2e6ec; font-size: 13px; box-sizing: border-box;
+  }
+  button { background: #2563a8; color: #fff; border: none; cursor: pointer; font-weight: 600; }
+  button:hover { background: #0f2942; }
+  button:disabled { background: #ccc; cursor: default; }
+  #status { font-size: 12px; margin: 6px 0; padding: 6px 8px; border-radius: 6px; }
+  #status.ok { background: #e6f4ea; color: #0e6b3a; }
+  #status.pendente { background: #fff8e6; color: #7a5c00; }
+  .aviso-pendencia {
+    font-size: 11px; color: #7a5c00; background: #fff8e6; border: 1px solid #f0d68a;
+    border-radius: 6px; padding: 8px 10px; margin-top: 10px; line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+  <h1>Lançamento de Notas SEDUC</h1>
+  <p class="dica">Esqueleto em construção — conclusão prevista para sexta-feira (24/07/2026), quando o mapeamento da tela "Lançar Nota" for finalizado.</p>
+
+  <div id="status" class="pendente">Verificando...</div>
+
+  <label for="turma">Turma</label>
+  <input type="text" id="turma" placeholder="Ex: 8° Ano D Integral Anual">
+
+  <label for="bimestre">Bimestre</label>
+  <select id="bimestre">
+    <option value="3º Bimestre">3º Bimestre</option>
+    <option value="4º Bimestre">4º Bimestre</option>
+  </select>
+
+  <button id="btn-navegar">Ir para tela de lançamento</button>
+  <button id="btn-lancar" disabled title="Aguardando mapeamento de sexta-feira">Lançar notas (em breve)</button>
+
+  <div class="aviso-pendencia">
+    Pendências conhecidas: (1) estrutura da tela "Lançar Nota" ainda não mapeada — bloqueada por data no site;
+    (2) o Supabase do Gestão Diário ainda não tem uma tabela de notas individuais por aluno para alimentar o lançamento automático.
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>

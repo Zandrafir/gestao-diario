@@ -2,10 +2,10 @@
   "background_color": "#050710",
   "dir": "ltr",
   "display": "standalone",
-  "name": "PAAC Gestão Acadêmica",
+  "name": "Gestão Diário",
   "orientation": "any",
   "scope": "/",
-  "short_name": "PAAC",
+  "short_name": "Gestão",
   "start_url": "/",
   "theme_color": "#00ffff",
   "description": "Sistema de Gestão Acadêmica"

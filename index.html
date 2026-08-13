@@ -328,7 +328,6 @@ document.head.appendChild(link);
 
   <!-- TUTORIA -->
   <div class="page" id="page-tutoria">
-    <!-- VISÃO LISTA DE ALUNOS -->
     <div id="tut-view-alunos">
       <div class="card" style="margin-bottom:12px">
         <div class="card-title" style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
@@ -347,14 +346,12 @@ document.head.appendChild(link);
       </div>
       <div id="tut-alunos-list"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
     </div>
-    <!-- VISÃO PERFIL DO ALUNO -->
     <div id="tut-view-aluno" style="display:none">
       <div class="back-row" onclick="voltarAlunos()">
         <div class="back-btn">←</div>
         <div class="back-title" id="tut-aluno-nome">Aluno</div>
       </div>
       <div id="tut-aluno-turma" style="font-size:12px;color:var(--neon);margin-bottom:12px;margin-left:42px;letter-spacing:1px"></div>
-      <!-- Stats do aluno -->
       <div style="display:flex;gap:10px;margin-bottom:12px">
         <div style="flex:1;background:var(--card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px;text-align:center">
           <div style="font-family:'Orbitron',sans-serif;font-size:22px;font-weight:900;color:var(--neon)" id="tut-aluno-total">0</div>
@@ -365,15 +362,12 @@ document.head.appendChild(link);
           <div style="font-size:10px;color:var(--text3);letter-spacing:1px">AGENDADAS</div>
         </div>
       </div>
-      <!-- Botões -->
       <div style="display:flex;gap:8px;margin-bottom:14px">
         <button onclick="novaSessionAluno()" style="flex:1;background:transparent;border:2px solid var(--neon);color:var(--neon);font-family:'Orbitron',sans-serif;font-weight:700;font-size:10px;letter-spacing:1px;border-radius:var(--radius-sm);padding:12px;cursor:pointer">📝 REGISTRAR</button>
         <button onclick="agendarTutoriaAluno()" style="flex:1;background:transparent;border:2px solid var(--purple);color:var(--purple);font-family:'Orbitron',sans-serif;font-weight:700;font-size:10px;letter-spacing:1px;border-radius:var(--radius-sm);padding:12px;cursor:pointer">📅 AGENDAR</button>
       </div>
-      <!-- Agendamentos -->
       <div class="card-title" style="margin-top:8px">Próximos Agendamentos</div>
       <div id="tut-aluno-agenda" style="margin-bottom:14px"></div>
-      <!-- Histórico -->
       <div class="card-title">Histórico de Sessões</div>
       <div id="tut-aluno-historico"></div>
     </div>
@@ -437,20 +431,17 @@ document.head.appendChild(link);
         <input class="form-input" id="nt-avaliacao" value="Nota Bimestral" placeholder="Ex: Prova, Trabalho..."/>
       </div>
     </div>
-
     <div class="card" style="margin-bottom:12px">
       <div class="card-title">Colar Lista de Alunos</div>
       <textarea class="form-input form-textarea" id="nt-colar" placeholder="Cole um nome por linha..."></textarea>
       <button class="btn-primary" onclick="gerarLinhasNotas()">▶ GERAR LINHAS</button>
     </div>
-
     <div class="card" style="margin-bottom:12px">
       <div class="card-title">Lançar Notas</div>
       <div id="nt-linhas"></div>
       <button class="btn-cancel" style="text-align:left;color:var(--neon);padding:6px 0" onclick="adicionarLinhaNota()">+ Adicionar aluno</button>
       <button class="btn-primary" onclick="salvarNotasTurma()">💾 SALVAR TODAS AS NOTAS</button>
     </div>
-
     <div class="section-title" style="margin-bottom:8px">Notas Já Lançadas</div>
     <div id="nt-lista-salvas"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
   </div>
@@ -562,7 +553,6 @@ document.head.appendChild(link);
   </div>
 </div>
 
-<!-- MODAL AGENDAR TUTORIA -->
 <div class="modal-overlay" id="modal-agendar" onclick="overlayClose(event,'modal-agendar')">
   <div class="modal">
     <div class="modal-title">📅 Agendar Tutoria</div>
@@ -581,7 +571,6 @@ document.head.appendChild(link);
   </div>
 </div>
 
-<!-- MODAL: DIA DO CALENDÁRIO (lista de sessões do dia + agendar) -->
 <div class="modal-overlay" id="modal-dia" onclick="overlayClose(event,'modal-dia')">
   <div class="modal">
     <div class="modal-title" id="cd-data-label">Dia</div>
@@ -591,7 +580,6 @@ document.head.appendChild(link);
   </div>
 </div>
 
-<!-- MODAL: LISTA MESTRA DE ALUNOS -->
 <div class="modal-overlay" id="modal-lista-mestra" onclick="overlayClose(event,'modal-lista-mestra')">
   <div class="modal">
     <div class="modal-title">📋 Lista Mestra de Alunos</div>
@@ -612,16 +600,12 @@ document.head.appendChild(link);
     <div id="ta-status-badge" class="badge cyan">Pendente</div>
   </div>
 
-  <!-- PDF VIEWER -->
   <div style="flex:1;overflow-y:auto;display:flex;flex-direction:column;">
     <div id="ta-pdf-area" style="flex:1;min-height:300px;background:var(--bg3);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:12px;padding:20px;">
       <div id="ta-pdf-content" style="width:100%;height:100%"></div>
     </div>
 
-    <!-- UPLOAD PDF (Removido pois agora os PDFs vêm direto do GitHub) -->
-    <div id="ta-upload-area" style="display:none;"></div>
-
-    <!-- METODOLOGIAS ATIVAS (sugestão por IA para o tema da aula) -->
+    <!-- METODOLOGIAS ATIVAS -->
     <div style="padding:16px;background:var(--bg2);border-top:1px solid var(--border)">
       <div class="card" style="padding:14px">
         <div class="card-title">💡 Metodologias Ativas</div>
@@ -639,7 +623,6 @@ document.head.appendChild(link);
   </div>
 </div>
 
-<!-- MODAL: REGISTRAR AULA -->
 <div class="modal-overlay" id="modal-aula-detalhe" onclick="overlayClose(event,'modal-aula-detalhe')">
   <div class="modal">
     <div class="modal-title" id="mad-title">Registrar Aula 1</div>
@@ -728,33 +711,6 @@ const TOTAL_AULAS_9ANO = 18;
 function totalAulasPorTurma(turma){ return turma.startsWith('8') ? TOTAL_AULAS_8ANO : TOTAL_AULAS_9ANO; }
 function totalAulasPorGrupo(grupo){ return grupo==='8ano' ? TOTAL_AULAS_8ANO : TOTAL_AULAS_9ANO; }
 
-// Normaliza nomes de diretório antes de montar o caminho no Storage: troca
-// barras invertidas (comuns em paths copiados do Windows) e hífens soltos
-// (com ou sem espaço ao redor, ex: "9º Ano - 3º Bimestre") por barra normal,
-// garantindo "9º Ano/3º Bimestre" independente de como o texto chegou.
-function normalizarCaminhoStorage(caminho){
-  return caminho
-    .replace(/\\/g, '/')
-    .replace(/\s*-\s*/g, '/')
-    .split('/')
-    .map(s=>s.trim())
-    .filter(Boolean)
-    .join('/');
-}
-function nomeGrupoAno(grupo){ return grupo==='8ano' ? '8º Ano' : '9º Ano'; }
-
-// O Storage do Supabase rejeita QUALQUER caractere fora do ASCII na chave do
-// objeto (testado: 'º' e até acentos comuns como 'É' voltam "400 Invalid key").
-// Por isso, depois de normalizar as barras/separadores, ainda precisamos trocar
-// 'º'/'ª' e letras acentuadas por equivalentes ASCII antes de montar o path
-// que vai de fato para o storage (o nome "bonito" continua exibido na UI).
-function sanitizarParaStorageKey(caminho){
-  return caminho
-    .replace(/º/g,'o').replace(/ª/g,'a')
-    .normalize('NFD').replace(/[̀-ͯ]/g,'')
-    .replace(/[^a-zA-Z0-9 _\-\/.]/g,'');
-}
-
 // ── AUTH ──────────────────────────────────────────────
 async function fazerLogin(){
   const email = document.getElementById('login-email').value.trim();
@@ -815,10 +771,6 @@ function boot(nome, token){
   iniciarMonitorNotificacoes();
 }
 
-// ── FILTRO DE BIMESTRE (global) ─────────────────────────
-// Filtra a VISUALIZAÇÃO de Aulas/Progressos/Tutoria pelo bimestre selecionado.
-// Nada é apagado no banco: registros de bimestres anteriores continuam lá,
-// só não entram no filtro `bimestre=eq.<atual>` das consultas.
 function mudarBimestreGlobal(v){
   curBimestre = v;
   localStorage.setItem('gd_bimestre', v);
@@ -839,17 +791,30 @@ function logout(){
 
 // ── SUPABASE ────────────────────────────────────────────
 async function api(table,method='GET',body=null,filter=''){
-  let url=`${URL}/rest/v1/${table}`;
+  // Limpa qualquer barra extra no final da URL para evitar o erro de path
+  const baseUrl = URL.replace(/\/rest\/v1\/?$/, '').replace(/\/$/, '');
+  let endpoint = `${baseUrl}/rest/v1/${table}`;
+  
   const params=[];
   if(filter) params.push(filter);
   if(method==='GET') params.push('order=created_at.desc');
-  if(params.length) url+='?'+params.join('&');
+  if(params.length) endpoint += '?' + params.join('&');
+  
   const h={'apikey':SUPABASE_KEY,'Authorization':'Bearer '+(USER_TOKEN||KEY),'Content-Type':'application/json'};
   if(method==='POST') h['Prefer']='return=representation';
-  const r=await fetch(url,{method,headers:h,body:body?JSON.stringify(body):null});
-  if(!r.ok){const e=await r.text();throw new Error(e);}
-  if(method==='DELETE'||method==='PATCH') return true;
-  const t=await r.text();return t?JSON.parse(t):[];
+  
+  try {
+    const r=await fetch(endpoint,{method,headers:h,body:body?JSON.stringify(body):null});
+    if(!r.ok){
+      const e = await r.json();
+      throw e;
+    }
+    if(method==='DELETE'||method==='PATCH') return true;
+    const t=await r.text();return t?JSON.parse(t):[];
+  } catch(e) {
+    console.error("Erro na chamada API:", e);
+    throw e;
+  }
 }
 
 // ── NAVIGATION ──────────────────────────────────────────
@@ -986,8 +951,8 @@ async function loadAulasTurma(turma){
   try{
     // Determina grupo: 8ano ou 9ano
     const grupo=turma.startsWith('8')?'8ano':'9ano';
-    // Busca progresso específico desta turma, só do bimestre atual (registros de
-    // bimestres anteriores continuam no banco, apenas não entram nesta consulta)
+    
+    // Busca progresso específico desta turma
     const progRows=await api('aulas_turma','GET',null,`turma=eq.${turma}&bimestre=eq.${curBimestre}`);
 
     // Monta map de status por numero_aula para esta turma
@@ -1052,19 +1017,14 @@ function felarTelaAula() {
   if(curAulaCtx) loadAulasTurma(curAulaCtx.turma);
 }
 
-// Arquivos PDF vêm direto do GitHub - não depende mais de um HEAD check. 
+// GITHUB PDF LOGIC (ATUALIZADO PARA ARQUIVOS NA RAIZ COM ZEROS)
 function carregarPDFAula(grupo, num) {
   const pdfArea = document.getElementById('ta-pdf-content');
-  const pdfInfo = document.getElementById('ta-pdf-info');
-  const uploadArea = document.getElementById('ta-upload-area');
-
-  // Oculta a área de upload, pois os arquivos agora vêm do GitHub
-  if(uploadArea) uploadArea.style.display = 'none';
-
+  
   // 1. Formata o número da aula para ter sempre dois dígitos (ex: 1 vira "01")
   const numStr = String(num).padStart(2, '0');
   
-  // 2. Define o nome exato do arquivo baseado no grupo, lendo direto da raiz
+  // 2. Define o nome exato do arquivo baseado no grupo, lendo direto da raiz do repositório
   let nomeArquivo = '';
   if (grupo === '8ano') {
     nomeArquivo = `Resumo_Aula_${numStr}_8Ano_3Bim.pdf`;
@@ -1078,18 +1038,10 @@ function carregarPDFAula(grupo, num) {
     <div style="width:100%;height:70vh;border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border2)">
       <iframe src="${nomeArquivo}" style="width:100%;height:100%;border:none;background:#fff"></iframe>
     </div>
-    <a href="${nomeArquivo}" target="_blank" style="display:block;text-align:center;color:var(--neon);font-size:12px;margin-top:10px;font-family:'Orbitron',sans-serif;letter-spacing:1px">↗ ABRIR EM NOVA ABA (TELA CHEIA)</a>`;
-  
-  if(pdfInfo) pdfInfo.innerHTML = `<div style="font-size:12px;color:var(--green);margin-bottom:10px">✅ Carregando do GitHub: ${nomeArquivo}</div>`;
-}
-
-  pdfArea.innerHTML = `
-    <div style="width:100%;height:70vh;border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border2)">
-      <iframe src="${url}" style="width:100%;height:100%;border:none;background:#fff"></iframe>
+    <div style="text-align:center; margin-top:10px">
+      <a href="${nomeArquivo}" target="_blank" style="display:block;text-align:center;color:var(--neon);font-size:12px;margin-top:10px;font-family:'Orbitron',sans-serif;letter-spacing:1px">↗ ABRIR EM NOVA ABA (TELA CHEIA)</a>
     </div>
-    <a href="${url}" target="_blank" style="display:block;text-align:center;color:var(--neon);font-size:12px;margin-top:10px;font-family:'Orbitron',sans-serif;letter-spacing:1px">↗ ABRIR EM NOVA ABA (TELA CHEIA)</a>`;
-  
-  if(pdfInfo) pdfInfo.innerHTML = `<div style="font-size:12px;color:var(--green);margin-bottom:10px">✅ Carregando do GitHub: ${url}</div>`;
+  `;
 }
 
 function abrirRegistroAula() {
@@ -1138,13 +1090,7 @@ async function saveAulaDetalhe() {
   } catch(e) { toast('Erro: '+e.message, 'error'); }
 }
 
-function openAulaDetalheNova() {
-  toast('Clique em uma aula da lista para abrir', 'error');
-}
-
 // ── IA (proxy via Edge Function) ───────────────────────
-// A chave da IA NÃO fica aqui: o PWA chama a Edge Function 'ia', que guarda a
-// chave no servidor. Aqui só montamos o pedido e mostramos o resultado.
 async function chamarIA(payload){
   const r = await fetch(`${URL}/functions/v1/ia`,{
     method:'POST',
@@ -1179,15 +1125,6 @@ async function sugerirMetodologias(){
 }
 
 // ── NOTAS POR ALUNO (Historia) ──────────────────────────
-// Fonte de dados para a extensão "Lançamento de Notas SEDUC". A extensão lê
-// esta mesma tabela (notas_alunos) direto via REST do Supabase - ver
-// contrato exato de JSON nos comentários de cada função abaixo.
-// Ainda não há uma tela própria no PWA para chamar estas funções; ficam
-// prontas para uso quando construirmos a tela "Lançar Notas" ou para testar
-// via console por enquanto.
-
-// Lista as notas já lançadas de uma turma/bimestre (para exibir/editar no PWA).
-// Retorna: [{id, aluno_nome, turma, disciplina, bimestre, avaliacao_nome, nota, injetado}, ...]
 async function buscarNotasTurma(turma, bimestre, disciplina = 'Historia') {
   const params = new URLSearchParams({
     turma: `eq.${turma}`,
@@ -1198,10 +1135,6 @@ async function buscarNotasTurma(turma, bimestre, disciplina = 'Historia') {
   return api('notas_alunos', 'GET', null, params.toString());
 }
 
-// Salva (cria ou atualiza) a nota de um aluno. Faz upsert pelo conjunto
-// (aluno_nome, turma, disciplina, bimestre, avaliacao_nome) - é a constraint
-// UNIQUE da tabela, então rodar de novo com o mesmo aluno+avaliação
-// substitui a nota anterior em vez de duplicar linha.
 async function salvarNota(alunoNome, turma, bimestre, notaValor, avaliacaoNome = 'Nota Bimestral', disciplina = 'Historia') {
   const url = `${URL}/rest/v1/notas_alunos?on_conflict=aluno_nome,turma,disciplina,bimestre,avaliacao_nome`;
   const resposta = await fetch(url, {
@@ -1225,8 +1158,6 @@ async function salvarNota(alunoNome, turma, bimestre, notaValor, avaliacaoNome =
   return resposta.json();
 }
 
-// Marca notas como já injetadas no Sala do Futuro (chamada pela extensão
-// depois de preencher com sucesso, ou pelo PWA se quiser confirmar manualmente).
 async function marcarNotasInjetadas(ids) {
   if (!ids?.length) return;
   const url = `${URL}/rest/v1/notas_alunos?id=in.(${ids.join(',')})`;
@@ -1243,11 +1174,7 @@ async function marcarNotasInjetadas(ids) {
 }
 
 // ── TUTORIA ────────────────────────────────────────────
-// ── TUTORIA — SISTEMA COMPLETO ──────────────────────────
-// Lista mestra de alunos vem do Supabase (tabela alunos_tutoria), não mais
-// hardcoded aqui — carregada por carregarAlunosTutoria() a cada entrada na aba.
 let ALUNOS = [];
-
 let curAluno = null;
 let allSessoes = [];
 let allAgendamentos = [];
@@ -1542,20 +1469,12 @@ function populateTurmaSelectNotas(){
 
 let notasLinhas = []; // [{nome, nota}]
 
-// A extensão "Integração SED" salva os alunos extraídos do portal com o nome
-// completo da turma (ex: "8° Ano D Integral 7H T1 Anual"). Aqui convertemos
-// isso pra sigla curta usada no PWA (ex: "8ºD") pra poder casar com o
-// seletor de turma desta tela.
 function siglaDaTurmaSED(turmaSed){
   if(!turmaSed) return null;
   const m = turmaSed.match(/(\d)\s*°?\s*Ano\s*([A-Za-z])/i);
   return m ? `${m[1]}º${m[2].toUpperCase()}` : null;
 }
 
-// Busca automática: se a turma selecionada já tem alunos extraídos pela
-// extensão (tabela alunos_sed), preenche a lista de lançamento sozinha - só
-// quando a lista ainda está vazia, pra nunca sobrescrever notas que o
-// professor já esteja digitando.
 async function autoCarregarAlunosDoSED(){
   const turma=document.getElementById('nt-turma').value;
   if(!turma || notasLinhas.length) return;
@@ -1733,9 +1652,6 @@ async function salvarLembrete(){
   const hora=document.getElementById('lb-hora').value || '08:00';
   if(!texto||!data){toast('Preencha o texto e a data','error');return;}
   try{
-    // Monta a data/hora como horário LOCAL do professor (new Date com componentes
-    // separados usa o fuso do dispositivo) antes de converter para UTC via
-    // toISOString() - evita que "09:30" vire "09:30 UTC" (defasagem de 3h em SP).
     const [ano,mes,dia] = data.split('-').map(Number);
     const [h,m] = hora.split(':').map(Number);
     const dataHoraLocal = new Date(ano, mes-1, dia, h, m);
@@ -1834,17 +1750,6 @@ function loadSettings(){
 }
 
 // ── NOTIFICAÇÕES DE CHAMADA ─────────────────────────────
-// Dois níveis, complementares:
-//  1. PUSH REAL (Bloco 5): o navegador do celular assina um "push subscription"
-//     e salva no Supabase (tabela push_subscriptions). Uma Edge Function
-//     ('push-chamada'), acionada por cron a cada minuto, cruza a grade
-//     (tabela grade_horaria) com o horário e dispara o push 20min após o início
-//     da aula — funciona mesmo com o app FECHADO / celular bloqueado.
-//  2. MOTOR LOCAL (fallback): se o push não estiver ativo, um setInterval faz o
-//     mesmo cálculo enquanto o app está aberto. Quando o push está ativo, o
-//     motor local desliga para não notificar em dobro.
-// Chave pública VAPID (par gerado só para este projeto). É pública por design;
-// a chave privada correspondente fica APENAS como secret da Edge Function.
 const VAPID_PUBLIC_KEY = 'BCPwUHglQB2lQiKWh1BdgrfGe9E0TMACcpiS9tQpDzER7pgjir_DGkotXlGxezhxUdrpT2HLfZ18slccW-tvbHA';
 const DIA_SEMANA_PARA_CHAVE = {1:'seg',2:'ter',3:'qua',4:'qui',5:'sex'};
 let intervalNotificacoes = null;
@@ -1872,7 +1777,6 @@ function atualizarStatusNotificacao(){
   }
 }
 
-// Converte a chave VAPID (base64url) para o Uint8Array que o pushManager exige.
 function urlBase64ToUint8Array(base64String){
   const padding = '='.repeat((4 - base64String.length % 4) % 4);
   const base64 = (base64String + padding).replace(/-/g,'+').replace(/_/g,'/');
@@ -1882,9 +1786,6 @@ function urlBase64ToUint8Array(base64String){
   return arr;
 }
 
-// Corrida contra um timeout: se a promise passada nunca resolver NEM
-// rejeitar (o sintoma relatado - botão travado em "ATIVANDO..."), isso força
-// uma rejeição depois de `ms` para o catch de fora conseguir agir.
 function comTimeout(promise, ms, etapa){
   let timer;
   const timeout = new Promise((_, reject)=>{
@@ -1913,10 +1814,6 @@ async function pedirPermissaoNotificacao(){
     toast('Alertas de chamada ativados!','success');
     atualizarStatusNotificacao();
   }catch(e){
-    // Não deixa o botão preso em "ATIVANDO..." - some erro concreto e visível,
-    // e o professor pode clicar de novo pra tentar (não sobrescrevo com
-    // atualizarStatusNotificacao aqui de propósito, senão o texto de falha
-    // desaparece antes de dar tempo de ler).
     console.error('[push] ERRO ao ativar notificações push:', e);
     localStorage.removeItem('push_ativo');
     btn.disabled = false;
@@ -1925,10 +1822,6 @@ async function pedirPermissaoNotificacao(){
   }
 }
 
-// Assina o push no navegador e salva a subscription no Supabase (upsert por
-// endpoint, para não duplicar se o professor reativar no mesmo aparelho).
-// Cada etapa tem seu próprio try/catch + console.error, e um timeout de 10s
-// pra nenhuma delas travar o botão pra sempre caso a promise nunca resolva.
 async function ativarPushReal(){
   console.log('[push] Iniciando ativarPushReal()...');
 
@@ -1986,10 +1879,6 @@ async function ativarPushReal(){
   }
 }
 
-// Testa isoladamente se a VAPID_PUBLIC_KEY converte para os 65 bytes
-// esperados de uma chave pública P-256 não comprimida (0x04 + X(32) + Y(32)).
-// Roda uma vez na carga da página só para acusar no console se a chave em
-// uso estiver com formato errado (não altera nada na UI).
 (function validarFormatoVapid(){
   try{
     const bytes = urlBase64ToUint8Array(VAPID_PUBLIC_KEY);
@@ -2004,10 +1893,10 @@ async function ativarPushReal(){
 })();
 
 function checarNotificacoesAula(agora=new Date()){
-  if(pushAtivo()) return; // push real cuida disso no servidor - motor local desliga
+  if(pushAtivo()) return; 
   if(!('Notification' in window) || Notification.permission!=='granted') return;
   const diaKey = DIA_SEMANA_PARA_CHAVE[agora.getDay()];
-  if(!diaKey) return; // fim de semana, sem aulas
+  if(!diaKey) return; 
 
   HORARIO.forEach(bloco=>{
     const turma = bloco[diaKey];
@@ -2018,8 +1907,6 @@ function checarNotificacoesAula(agora=new Date()){
     if(diff>=0 && diff<60000){
       const chave = `notif_chamada_${agora.toDateString()}_${bloco.hora}_${turma}`;
       if(localStorage.getItem(chave)) return;
-      // Só marca como enviada depois que a notificação REALMENTE disparou -
-      // se falhar (ex: SW ainda não pronto), tenta de novo no próximo tick.
       dispararNotificacaoChamada(turma, bloco.hora).then(()=>{
         localStorage.setItem(chave,'1');
       }).catch(()=>{});
@@ -2042,16 +1929,19 @@ function iniciarMonitorNotificacoes(){
   checarNotificacoesAula();
   intervalNotificacoes = setInterval(()=>checarNotificacoesAula(), 60000);
 }
+
 function setTheme(t,save=true){
   document.body.className=t==='light'?'theme-light':t==='dark'?'theme-dark':'';
   document.querySelectorAll('.theme-opt').forEach(el=>el.classList.remove('sel'));
   document.getElementById('theme-'+t)?.classList.add('sel');
   if(save) localStorage.setItem('paac_theme',t);
 }
+
 function changeFontSize(delta){
   fontSize=Math.min(20,Math.max(12,fontSize+delta));
   setFontSizeDirect(fontSize);
 }
+
 function setFontSizeDirect(s,save=true){
   fontSize=s;
   document.documentElement.style.setProperty('--font-size',s+'px');

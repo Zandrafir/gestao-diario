@@ -1017,31 +1017,121 @@ function felarTelaAula() {
   if(curAulaCtx) loadAulasTurma(curAulaCtx.turma);
 }
 
-// GITHUB PDF LOGIC (ATUALIZADO PARA ARQUIVOS NA RAIZ COM ZEROS)
-function carregarPDFAula(grupo, num) {
+// ── PDF: BUSCA E UPLOAD PELO SISTEMA (SUPABASE) ──────────────────
+async function carregarPDFAula(grupo, num) {
   const pdfArea = document.getElementById('ta-pdf-content');
+  const uploadArea = document.getElementById('ta-upload-area');
   
-  // 1. Formata o número da aula para ter sempre dois dígitos (ex: 1 vira "01")
-  const numStr = String(num).padStart(2, '0');
-  
-  // 2. Define o nome exato do arquivo baseado no grupo, lendo direto da raiz do repositório
-  let nomeArquivo = '';
-  if (grupo === '8ano') {
-    nomeArquivo = `Resumo_Aula_${numStr}_8Ano_3Bim.pdf`;
-  } else {
-    // 9º ano
-    nomeArquivo = `Aula_${numStr}.pdf`;
-  }
+  pdfArea.innerHTML = '<div class="loading"><div class="spinner"></div>Buscando PDF no sistema...</div>';
 
-  // 3. Monta o visualizador de PDF
-  pdfArea.innerHTML = `
-    <div style="width:100%;height:70vh;border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border2)">
-      <iframe src="${nomeArquivo}" style="width:100%;height:100%;border:none;background:#fff"></iframe>
-    </div>
-    <div style="text-align:center; margin-top:10px">
-      <a href="${nomeArquivo}" target="_blank" style="display:block;text-align:center;color:var(--neon);font-size:12px;margin-top:10px;font-family:'Orbitron',sans-serif;letter-spacing:1px">↗ ABRIR EM NOVA ABA (TELA CHEIA)</a>
-    </div>
-  `;
+  try {
+    const bimestreAtual = curAulaCtx?.bimestre || curBimestre;
+    // Vai no Supabase ver se a aula já foi enviada
+    const existentes = await api('pdfs_aula','GET',null,`grupo=eq.${grupo}&numero_aula=eq.${num}&bimestre=eq.${bimestreAtual}`);
+    const registro = existentes[0];
+    
+    if (registro?.arquivo_url) {
+      // Se a aula existe no banco, mostra o PDF
+      pdfArea.innerHTML = `
+        <div style="width:100%;height:70vh;border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border2)">
+          <iframe src="${registro.arquivo_url}" style="width:100%;height:100%;border:none;background:#fff"></iframe>
+        </div>
+        <a href="${registro.arquivo_url}" target="_blank" style="display:block;text-align:center;color:var(--neon);font-size:12px;margin-top:10px;font-family:'Orbitron',sans-serif;letter-spacing:1px">↗ ABRIR EM NOVA ABA (TELA CHEIA)</a>`;
+      
+      // Deixa o botão disponível caso você queira substituir o PDF
+      if(uploadArea) {
+        uploadArea.style.display = 'block';
+        uploadArea.innerHTML = `
+          <div style="font-size:11px;color:var(--green);margin-bottom:8px;font-family:'Orbitron',sans-serif">✅ PDF já enviado no sistema.</div>
+          <input type="file" id="ta-file" accept=".pdf" class="form-input" style="padding:10px;margin-bottom:8px"/>
+          <button class="btn-primary" onclick="uploadPDFAula()" style="margin-top:0">🔄 SUBSTITUIR PDF</button>
+        `;
+      }
+    } else {
+      // Se a aula não existe, mostra apenas a área para subir
+      pdfArea.innerHTML = `
+        <div style="text-align:center;color:var(--text3);padding:30px">
+          <div style="font-size:48px;margin-bottom:12px">📄</div>
+          <div style="font-family:'Orbitron',sans-serif;font-size:12px">Nenhum PDF no sistema</div>
+          <div style="font-size:11px;margin-top:8px;line-height:1.7">Use o botão abaixo para fazer o upload da aula.</div>
+        </div>`;
+      if(uploadArea) {
+        uploadArea.style.display = 'block';
+        uploadArea.innerHTML = `
+          <input type="file" id="ta-file" accept=".pdf" class="form-input" style="padding:10px;margin-bottom:8px"/>
+          <button class="btn-primary" onclick="uploadPDFAula()" style="margin-top:0">▶ SUBIR PDF DA AULA</button>
+        `;
+      }
+    }
+  } catch(e) {
+    pdfArea.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div><p>Erro ao buscar PDF.<br><small style="color:var(--red)">${e.message}</small></p></div>`;
+  }
+}
+
+async function uploadPDFAula() {
+  const {grupo, num} = curAulaCtx;
+  const fileInput = document.getElementById('ta-file');
+  const file = fileInput?.files[0];
+  if (!file) { toast('Selecione um PDF', 'error'); return; }
+  
+  const btn = fileInput.nextElementSibling;
+  const originalText = btn.textContent;
+  btn.textContent = 'Enviando... Aguarde';
+  btn.disabled = true;
+  toast('Fazendo upload...', '');
+
+  try {
+    const bimestreAtual = curAulaCtx.bimestre || curBimestre;
+    const bimNum = bimestreAtual.charAt(0);
+    const numStr = String(num).padStart(2, '0');
+    
+    // Organiza a pasta lá no Storage do Supabase
+    const pastaStorage = `${grupo==='8ano'?'8Ano':'9Ano'}/${bimNum}Bimestre/Aula_${numStr}.pdf`;
+    const BUCKET = 'resumos_aulas';
+
+    // Dispara para o Supabase
+    let up = await fetch(`${URL}/storage/v1/object/${BUCKET}/${pastaStorage}`, {
+      method:'POST',
+      headers:{
+        'apikey':KEY,
+        'Authorization':'Bearer '+KEY,
+        'Content-Type':'application/pdf',
+        'x-upsert':'true'
+      },
+      body:file
+    });
+
+    if (!up.ok) {
+      up = await fetch(`${URL}/storage/v1/object/${BUCKET}/${pastaStorage}`, {
+        method:'PUT',
+        headers:{
+          'apikey':KEY,
+          'Authorization':'Bearer '+KEY,
+          'Content-Type':'application/pdf'
+        },
+        body:file
+      });
+    }
+
+    if (!up.ok) throw new Error('Falha no upload para o Storage.');
+
+    // Pega o link público e salva na tabela
+    const arquivo_url = `${URL}/storage/v1/object/public/${BUCKET}/${pastaStorage}`;
+    const existing = await api('pdfs_aula','GET',null,`grupo=eq.${grupo}&numero_aula=eq.${num}&bimestre=eq.${bimestreAtual}`);
+    
+    if (existing.length) {
+      await api('pdfs_aula','PATCH',{arquivo_url, nome:`Aula ${num}`},`id=eq.${existing[0].id}`);
+    } else {
+      await api('pdfs_aula','POST',{grupo, numero_aula:num, bimestre:bimestreAtual, arquivo_url, nome:`Aula ${num}`});
+    }
+    
+    toast('PDF enviado com sucesso!', 'success');
+    carregarPDFAula(grupo, num);
+  } catch(e) { 
+    toast('Erro: '+e.message, 'error'); 
+    btn.textContent = originalText;
+    btn.disabled = false;
+  }
 }
 
 function abrirRegistroAula() {

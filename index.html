@@ -333,6 +333,7 @@ const link = document.createElement('link'); link.rel = 'manifest'; link.href = 
         <div class="module-btn" onclick="goTo('aulas')"><span class="mod-icon">📚</span><span class="mod-label">Aulas</span></div>
         <div class="module-btn" onclick="goTo('notas')"><span class="mod-icon">📝</span><span class="mod-label">Notas</span></div>
         <div class="module-btn" onclick="goTo('metodologias')"><span class="mod-icon">💡</span><span class="mod-label">Métodos</span></div>
+        <div class="module-btn" onclick="goTo('frequencia')"><span class="mod-icon">📅</span><span class="mod-label">Frequência</span></div>
         <div class="module-btn" onclick="goTo('diario')"><span class="mod-icon">📓</span><span class="mod-label">Diário</span></div>
         <div class="module-btn" onclick="goTo('relatorios')"><span class="mod-icon">📊</span><span class="mod-label">Relatórios</span></div>
       </div>
@@ -487,6 +488,41 @@ const link = document.createElement('link'); link.rel = 'manifest'; link.href = 
   <div class="page" id="page-metodologias">
     <div class="section-title">Metodologias Ativas</div>
     <div id="metodologias-list"><div class="loading"><div class="spinner"></div>Carregando...</div></div>
+  </div>
+
+  <!-- FREQUÊNCIA -->
+  <div class="page" id="page-frequencia">
+    <div class="section-title" style="margin-bottom:12px">Diário de Frequência</div>
+
+    <div class="card" style="margin-bottom:16px">
+      <div class="card-title">Turma e Data</div>
+      <div style="display:flex;gap:10px">
+        <div class="form-group" style="flex:1;margin-bottom:0">
+          <label class="form-label">Turma</label>
+          <select class="form-input" id="fr-turma" onchange="mudouTurmaOuDataFrequencia()">
+            <option value="">Selecione...</option>
+          </select>
+        </div>
+        <div class="form-group" style="flex:1;margin-bottom:0">
+          <label class="form-label">Data da Aula</label>
+          <input class="form-input" type="date" id="fr-data" onchange="mudouTurmaOuDataFrequencia()"/>
+        </div>
+      </div>
+    </div>
+
+    <div class="card" style="padding:16px 8px;">
+      <div class="card-title" style="padding-left:8px; display:flex; justify-content:space-between; align-items:center;">
+        <span>Lista de Presença</span>
+        <span id="fr-contagem" style="font-size:11px; color:var(--text3); font-weight:600;"></span>
+      </div>
+      <div id="fr-lista" style="padding:0 8px;">
+        <div style="color:var(--text3);font-size:12px;padding:10px">Selecione a turma.</div>
+      </div>
+    </div>
+
+    <div style="padding:16px 0 0;">
+      <button class="btn-primary" style="background: linear-gradient(135deg, var(--green), var(--neon)); color:#000; border:none;" onclick="salvarFrequencia()">✔ SALVAR CHAMADA</button>
+    </div>
   </div>
 
   <!-- DIÁRIO -->
@@ -812,9 +848,9 @@ function goTo(p){
   document.getElementById('page-'+p)?.classList.add('active');
   document.getElementById('nav-'+p)?.classList.add('active');
   curPage=p;
-  const titles={home:'Gestão Educacional',tutoria:'Tutoria',aulas:'Grade & Aulas',notas:'Pesos & Notas',metodologias:'Banco de Dinâmicas',diario:'Diário',relatorios:'Relatórios',settings:'Configurações'};
+  const titles={home:'Gestão Educacional',tutoria:'Tutoria',aulas:'Grade & Aulas',notas:'Pesos & Notas',metodologias:'Banco de Dinâmicas',frequencia:'Diário de Frequência',diario:'Diário',relatorios:'Relatórios',settings:'Configurações'};
   document.getElementById('header-title').textContent=titles[p]||'Gestão Educacional';
-  const loaders={home:loadHome,tutoria:loadTutoria,aulas:loadAulasPrincipal,notas:loadNotas,metodologias:loadMetodologias,diario:loadDiario,relatorios:loadRelatorios};
+  const loaders={home:loadHome,tutoria:loadTutoria,aulas:loadAulasPrincipal,notas:loadNotas,metodologias:loadMetodologias,frequencia:loadFrequencia,diario:loadDiario,relatorios:loadRelatorios};
   if(loaders[p]) loaders[p]();
 }
 
@@ -1124,7 +1160,7 @@ async function mudouTurmaNotas(){
   // Carrega configuração de atividades do localStorage
   const cfgStr = localStorage.getItem(`paac_ativ_${turma}_${curBimestre}`);
   if(cfgStr) configAtividades = JSON.parse(cfgStr);
-  else configAtividades = [{id: 'ativ_padrao', nome: 'Nota Bimestral', peso: 100, tipo: 'Prova'}]; // Padrão legado
+  else configAtividades = [{id: 'ativ_padrao', nome: 'Nota Bimestral', peso: 100, tipo: 'Avaliação'}]; // Padrão legado
 
   renderConfigAtividades();
 
@@ -1159,7 +1195,7 @@ function renderConfigAtividades(){
   </div>`;
 
   configAtividades.forEach((a, i) => {
-    const tiposSED = ['Prova','Trabalho','Seminário','Tarefa','Pesquisa','Relatório'];
+    const tiposSED = ['Avaliação','Atividade','Trabalho','Outros'];
     html += `<div class="ativ-peso-row">
       <input class="form-input" style="flex:2; padding:8px;" placeholder="Nome da Atividade" value="${escaparHtml(a.nome)}" onchange="updateAtivConfig(${i}, 'nome', this.value)"/>
       <select class="form-input" style="flex:1.4; padding:8px;" onchange="updateAtivConfig(${i}, 'tipo', this.value)">
@@ -1174,7 +1210,7 @@ function renderConfigAtividades(){
 }
 
 function novaAtividadeConfig(){
-  configAtividades.push({ id: 'ativ_' + Date.now(), nome: '', peso: 0, tipo: 'Prova' });
+  configAtividades.push({ id: 'ativ_' + Date.now(), nome: '', peso: 0, tipo: 'Avaliação' });
   salvarEAtualizarAtividades();
 }
 function updateAtivConfig(i, campo, valor){
@@ -1326,6 +1362,108 @@ async function salvarTodasAsNotas(){
   }
 }
 
+
+// ── FREQUÊNCIA DIÁRIA (chamada por turma/data, toggle presente/falta) ──
+let freqAlunosData = {}; // alunoNome -> boolean presente
+
+function loadFrequencia(){
+  const el = document.getElementById('fr-turma');
+  if(el.options.length <= 1){
+    [...TURMAS_1,...TURMAS_2].forEach(t=>{ el.appendChild(new Option(t,t)); });
+  }
+  if(!document.getElementById('fr-data').value){
+    document.getElementById('fr-data').value = new Date().toISOString().slice(0,10);
+  }
+  if(el.value) mudouTurmaOuDataFrequencia();
+}
+
+async function mudouTurmaOuDataFrequencia(){
+  const turma = document.getElementById('fr-turma').value;
+  const data = document.getElementById('fr-data').value;
+  if(!turma || !data) return;
+
+  document.getElementById('fr-lista').innerHTML = loading();
+  document.getElementById('fr-contagem').textContent = '';
+  try {
+    const alunos = await api('alunos_tutoria','GET',null,`turma=eq.${turma}&order=nome.asc&select=nome`);
+    if(!alunos.length){
+      document.getElementById('fr-lista').innerHTML = empty('👥','Nenhum aluno cadastrado para esta turma em alunos_tutoria.');
+      return;
+    }
+
+    // Se já existe chamada salva pra essa turma+data, pré-carrega o estado
+    // real em vez do padrão "todos presentes" (evita perder o que já foi
+    // lançado se o professor reabrir a tela).
+    let existentes = [];
+    try { existentes = await api('frequencia_alunos','GET',null,`turma=eq.${turma}&data_aula=eq.${data}`); } catch(e) { existentes = []; }
+    const mapExistente = {};
+    existentes.forEach(r => { mapExistente[r.aluno_nome] = r.presente; });
+
+    freqAlunosData = {};
+    alunos.forEach(a => {
+      freqAlunosData[a.nome] = mapExistente.hasOwnProperty(a.nome) ? !!mapExistente[a.nome] : true;
+    });
+
+    renderFrequenciaLista();
+  } catch(e) {
+    document.getElementById('fr-lista').innerHTML = err(e);
+  }
+}
+
+function renderFrequenciaLista(){
+  const nomes = Object.keys(freqAlunosData).sort((a,b)=>a.localeCompare(b));
+  const presentes = nomes.filter(n=>freqAlunosData[n]).length;
+  document.getElementById('fr-contagem').textContent = `${presentes}/${nomes.length} presentes`;
+  document.getElementById('fr-lista').innerHTML = nomes.map(nome => {
+    const presente = freqAlunosData[nome];
+    return `<div style="display:flex;justify-content:space-between;align-items:center;padding:10px 4px;border-bottom:1px solid var(--border)">
+      <span style="font-size:13px;font-weight:600">${escaparHtml(nome)}</span>
+      <div onclick="toggleFrequenciaAluno('${escaparHtml(nome)}')" style="cursor:pointer;padding:6px 14px;border-radius:20px;font-size:11px;font-weight:700;letter-spacing:.5px;
+        background:${presente?'rgba(0,255,136,.15)':'rgba(255,60,95,.15)'};
+        color:${presente?'var(--green)':'var(--red)'};
+        border:1px solid ${presente?'var(--green)':'var(--red)'};">
+        ${presente?'PRESENTE':'FALTA'}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function toggleFrequenciaAluno(nome){
+  freqAlunosData[nome] = !freqAlunosData[nome];
+  renderFrequenciaLista();
+}
+
+// Upsert em lote (mesmo padrão de salvarTodasAsNotas: fetch nativo porque o
+// Prefer de merge-duplicates precisa ir num header HTTP, não na query string).
+async function salvarFrequencia(){
+  const turma = document.getElementById('fr-turma').value;
+  const data = document.getElementById('fr-data').value;
+  const nomes = Object.keys(freqAlunosData);
+  if(!turma || !data){ toast('Selecione turma e data.','error'); return; }
+  if(!nomes.length){ toast('Nenhum aluno carregado.','error'); return; }
+
+  const baseUrl = URL.replace(/\/rest\/v1\/?$/, '').replace(/\/$/, '');
+  const endpoint = `${baseUrl}/rest/v1/frequencia_alunos?on_conflict=aluno_nome,turma,data_aula`;
+  const headers = {
+    apikey: SUPABASE_KEY,
+    Authorization: 'Bearer ' + (USER_TOKEN || KEY),
+    'Content-Type': 'application/json',
+    'Prefer': 'resolution=merge-duplicates,return=minimal',
+  };
+  const body = JSON.stringify(nomes.map(nome => ({
+    aluno_nome: nome, turma, data_aula: data, presente: !!freqAlunosData[nome]
+  })));
+
+  toast('Salvando chamada...', '');
+  try {
+    const r = await fetch(endpoint, { method: 'POST', headers, body });
+    if(!r.ok){ throw await r.json().catch(() => ({ message: r.status + ' ' + r.statusText })); }
+    toast('Chamada salva!','success');
+  } catch(e) {
+    toast('Erro DB: ' + (e.message || JSON.stringify(e)), 'error');
+    console.error(e);
+  }
+}
 
 // ── METODOLOGIAS (C/ UPLOAD DE PDF) ─────────────────────
 async function loadMetodologias(){

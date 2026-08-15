@@ -1,0 +1,28 @@
+{
+  "name": "gestao-diario",
+  "version": "1.0.0",
+  "description": "",
+  "main": "sw.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "copy-web": "node scripts/copy-web.js",
+    "sync:android": "npm run copy-web && npx cap sync android",
+    "build:apk": "npm run sync:android && cd android && gradlew.bat assembleDebug",
+    "build:apk:release": "npm run sync:android && cd android && gradlew.bat assembleRelease"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Zandrafir/gestao-diario.git"
+  },
+  "keywords": [],
+  "type": "commonjs",
+  "bugs": {
+    "url": "https://github.com/Zandrafir/gestao-diario/issues"
+  },
+  "homepage": "https://github.com/Zandrafir/gestao-diario#readme",
+  "dependencies": {
+    "@capacitor/android": "^8.5.0",
+    "@capacitor/cli": "^8.5.0",
+    "@capacitor/core": "^8.5.0"
+  }
+}

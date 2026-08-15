@@ -1,3 +1,14 @@
 supabase/.temp/
 .DS_Store
 Thumbs.db
+
+# Capacitor / Android (app nativo)
+node_modules/
+www/
+android/app/build/
+android/build/
+android/.gradle/
+android/local.properties
+android/captures/
+android/.idea/
+*.apk

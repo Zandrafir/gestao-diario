@@ -1273,21 +1273,41 @@ async function autoCarregarAlunosDoSED(turmaParam){
   } catch(e) {}
 }
 
+// Upsert direto via fetch nativo (não usa api()) porque o Prefer de upsert
+// (resolution=merge-duplicates) TEM que ir num header HTTP - o PostgREST
+// ignora silenciosamente se ele vier dentro da query string, e a api() sempre
+// força Prefer:'return=representation' sozinho pra POST, sem essa opção. Sem
+// o merge-duplicates de verdade, toda nota repetida (mesma
+// aluno+turma+disciplina+bimestre+avaliacao_nome) batia na constraint UNIQUE
+// e vinha como erro 23505 (duplicate key) - a causa raiz do "Erro ao salvar
+// algumas notas".
 async function salvarTodasAsNotas(){
   const turma = document.getElementById('nt-turma').value;
   if(!turma){ toast('Selecione a turma','error'); return; }
+
+  const baseUrl = URL.replace(/\/rest\/v1\/?$/, '').replace(/\/$/, '');
+  const endpoint = `${baseUrl}/rest/v1/notas_alunos?on_conflict=aluno_nome,turma,disciplina,bimestre,avaliacao_nome`;
+  const headers = {
+    apikey: SUPABASE_KEY,
+    Authorization: 'Bearer ' + (USER_TOKEN || KEY),
+    'Content-Type': 'application/json',
+    'Prefer': 'resolution=merge-duplicates,return=representation',
+  };
 
   let promises = [];
   Object.keys(notasAlunosData).forEach(aluno => {
     configAtividades.forEach(a => {
       const cell = notasAlunosData[aluno][a.nome];
       if(cell && cell.nota !== '') {
+        const body = JSON.stringify({
+          aluno_nome: aluno, turma, disciplina: 'Historia', bimestre: curBimestre,
+          avaliacao_nome: a.nome, nota: parseFloat(cell.nota), tipo_avaliacao: a.tipo
+        });
         promises.push(
-          // upsert pela PK virtual (aluno, turma, disciplina, bimestre, avaliacao_nome)
-          api('notas_alunos', 'POST', {
-            aluno_nome: aluno, turma, disciplina: 'Historia', bimestre: curBimestre,
-            avaliacao_nome: a.nome, nota: parseFloat(cell.nota), tipo_avaliacao: a.tipo
-          }, 'on_conflict=aluno_nome,turma,disciplina,bimestre,avaliacao_nome&Prefer=resolution=merge-duplicates')
+          fetch(endpoint, { method: 'POST', headers, body }).then(async (r) => {
+            if(!r.ok){ throw await r.json().catch(() => ({ message: r.status + ' ' + r.statusText })); }
+            return r.json();
+          })
         );
       }
     });
@@ -1300,7 +1320,10 @@ async function salvarTodasAsNotas(){
     await Promise.all(promises);
     toast('Planilha salva no sistema!','success');
     mudouTurmaNotas(); // recarrega do banco pra confirmar
-  } catch(e) { toast('Erro ao salvar algumas notas.','error'); }
+  } catch(e) {
+    toast('Erro DB: ' + (e.message || JSON.stringify(e)), 'error');
+    console.error(e);
+  }
 }
 
 

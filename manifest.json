@@ -2,11 +2,11 @@
   "background_color": "#050710",
   "dir": "ltr",
   "display": "standalone",
-  "name": "Gestão Diário",
+  "name": "Gestão Educacional",
   "orientation": "any",
   "scope": ".",
-  "short_name": "Gestão",
+  "short_name": "Gestão Edu",
   "start_url": ".",
   "theme_color": "#00ffff",
-  "description": "Sistema de Gestão Acadêmica"
+  "description": "Sistema de Gestão Educacional"
 }

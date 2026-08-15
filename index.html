@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>Gestão Acadêmica</title>
+<title>Gestão Educacional</title>
 <link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#00ffff">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Gestão Diário">
+<meta name="apple-mobile-web-app-title" content="Gestão Educacional">
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
 <style>
 :root {
@@ -262,9 +262,9 @@ select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csv
 </style>
 <script>
 const manifestData = {
-  name: 'Gestão Diário',
-  short_name: 'Gestão',
-  description: 'Sistema de Gestão Acadêmica para professores',
+  name: 'Gestão Educacional',
+  short_name: 'Gestão Edu',
+  description: 'Sistema de Gestão Educacional para professores',
   start_url: '.',
   scope: '.',
   display: 'standalone',
@@ -283,7 +283,7 @@ const link = document.createElement('link'); link.rel = 'manifest'; link.href = 
 <div id="setup-screen">
   <div style="font-size:56px;margin-bottom:16px">🎮</div>
   <div class="setup-logo">GESTÃO</div>
-  <div class="setup-sub">Sistema de Gestão Acadêmica</div>
+  <div class="setup-sub">Sistema de Gestão Educacional</div>
   <input class="setup-input" id="login-email" type="email" placeholder="E-mail" autocomplete="email"/>
   <input class="setup-input" id="login-senha" type="password" placeholder="Senha" autocomplete="current-password" onkeydown="if(event.key==='Enter')fazerLogin()"/>
   <div id="login-erro" style="color:var(--red);font-size:13px;font-weight:600;text-align:center;min-height:20px;margin-bottom:8px"></div>
@@ -296,7 +296,7 @@ const link = document.createElement('link'); link.rel = 'manifest'; link.href = 
   <div class="app-header">
     <div class="header-left">
       <div class="subtitle">Painel do Professor</div>
-      <div class="title" id="header-title">Gestão Acadêmica</div>
+      <div class="title" id="header-title">Gestão Educacional</div>
     </div>
     <div class="header-right">
       <select class="bimestre-select" id="bimestre-global" onchange="mudarBimestreGlobal(this.value)">
@@ -633,6 +633,7 @@ const link = document.createElement('link'); link.rel = 'manifest'; link.href = 
     <div class="form-group"><label class="form-label">Tema / Pauta da Aula</label><textarea class="form-input form-textarea" id="ad-pauta" placeholder="O que foi ensinado..."></textarea></div>
     <div class="form-group"><label class="form-label">Onde Parei</label><input class="form-input" id="ad-parei" placeholder="Ex: Página 42"/></div>
     <div class="form-group"><label class="form-label">Combinados</label><textarea class="form-input form-textarea" id="ad-combinados" placeholder="Ex: Trazer material X..."></textarea></div>
+    <div class="form-group"><label class="form-label">Observações</label><textarea class="form-input form-textarea" id="ad-obs" placeholder="Observações adicionais (opcional)..."></textarea></div>
     <div class="form-group"><label class="form-label">Status</label>
       <div class="status-row">
         <div class="status-btn sel-pendente" id="sb-pendente" onclick="selStatus('pendente')">⬜ Pendente</div>
@@ -809,8 +810,8 @@ function goTo(p){
   document.getElementById('page-'+p)?.classList.add('active');
   document.getElementById('nav-'+p)?.classList.add('active');
   curPage=p;
-  const titles={home:'Gestão Acadêmica',tutoria:'Tutoria',aulas:'Grade & Aulas',notas:'Pesos & Notas',metodologias:'Banco de Dinâmicas',diario:'Diário',relatorios:'Relatórios',settings:'Configurações'};
-  document.getElementById('header-title').textContent=titles[p]||'Gestão Diário';
+  const titles={home:'Gestão Educacional',tutoria:'Tutoria',aulas:'Grade & Aulas',notas:'Pesos & Notas',metodologias:'Banco de Dinâmicas',diario:'Diário',relatorios:'Relatórios',settings:'Configurações'};
+  document.getElementById('header-title').textContent=titles[p]||'Gestão Educacional';
   const loaders={home:loadHome,tutoria:loadTutoria,aulas:loadAulasPrincipal,notas:loadNotas,metodologias:loadMetodologias,diario:loadDiario,relatorios:loadRelatorios};
   if(loaders[p]) loaders[p]();
 }
@@ -820,6 +821,41 @@ function openFab(){
   if(curPage==='aulas'){toast('Selecione uma turma e clique na aula','error');return;}
   if(curPage==='notas'){adicionarAlunoLista();return;}
   openM(map[curPage]||'tutoria');
+}
+
+// Abre um dos modais de "novo/editar registro" simples (tutoria, metodologia,
+// diário). `dados` ausente = modo criação (campos vazios, botão excluir
+// escondido); `dados` presente = modo edição (campos preenchidos, botão
+// excluir visível). Cada tipo mapeia id do campo HTML -> coluna do registro.
+function openM(tipo, dados){
+  const cfg = {
+    tutoria: { modal:'modal-tutoria', title:'mt-title', idField:'t-id', delBtn:'del-tutoria',
+      campos:{'t-aluno':'aluno_nome','t-data':'data_sessao','t-relatorio':'relatorio_texto','t-combinados':'combinados_proxima'} },
+    metodologia: { modal:'modal-metodologia', title:'mm-title', idField:'p-id', delBtn:'del-metodologia',
+      campos:{'p-nome':'nome_projeto','p-obj':'objetivos_metas','p-prazo':'prazo_entrega','p-status':'status'} },
+    diario: { modal:'modal-diario', title:'md-title', idField:'d-id', delBtn:'del-diario',
+      campos:{'d-titulo':'titulo','d-texto':'texto'} }
+  };
+  const c = cfg[tipo];
+  if(!c) return;
+
+  document.getElementById(c.idField).value = dados?.id || '';
+  Object.keys(c.campos).forEach(elId=>{
+    const el = document.getElementById(elId);
+    if(!el) return;
+    let v = dados ? (dados[c.campos[elId]] || '') : '';
+    // Some campo objetivos_metas pode ter um link de PDF anexado escondido no
+    // final (ver saveMetodologia) - não mostra essa parte técnica no textarea.
+    if(elId==='p-obj' && typeof v === 'string' && v.includes('[PDF:')) v = v.substring(0, v.indexOf('[PDF:')).trim();
+    el.value = v;
+  });
+  const pStatus = document.getElementById('p-status'); if(tipo==='metodologia' && pStatus && !dados) pStatus.value='planejamento';
+  const pPdf = document.getElementById('p-pdf'); if(pPdf) pPdf.value='';
+
+  document.getElementById(c.title).textContent = dados ? 'Editar' : ({tutoria:'Nova Sessão de Tutoria',metodologia:'Nova Metodologia',diario:'Nova Entrada'}[tipo]);
+  const del = document.getElementById(c.delBtn);
+  if(del) del.style.display = dados ? 'block' : 'none';
+  document.getElementById(c.modal).classList.add('open');
 }
 
 function overlayClose(e,id){if(e.target===e.currentTarget)closeModal(id);}
@@ -1018,6 +1054,14 @@ async function uploadPDFAula() {
   } catch(e) { toast('Erro: '+e.message, 'error'); }
 }
 function fecharTelaAula(){ document.getElementById('tela-aula').style.display='none'; if(curAulaCtx) abrirTurma(curAulaCtx.turma); }
+
+function selStatus(status){
+  curStatus = status;
+  document.querySelectorAll('#modal-aula-detalhe .status-btn').forEach(el=>{
+    el.classList.remove('sel-pendente','sel-andamento','sel-concluida');
+  });
+  document.getElementById('sb-'+status)?.classList.add('sel-'+status);
+}
 
 function abrirRegistroAula(){
   const {num, turma, grupo, data} = curAulaCtx;
@@ -1306,7 +1350,7 @@ async function saveMetodologia(){
 
     const body={
       nome_projeto: document.getElementById('p-nome').value,
-      disciplinas_envolvidas: document.getElementById('p-disc').value,
+      disciplinas_envolvidas: 'Historia',
       objetivos_metas: desc,
       prazo_entrega: document.getElementById('p-prazo').value||null,
       status: document.getElementById('p-status').value

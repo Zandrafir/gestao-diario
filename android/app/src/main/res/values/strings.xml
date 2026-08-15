@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">Gestão Diário</string>
-    <string name="title_activity_main">Gestão Diário</string>
+    <string name="app_name">Gestão Educacional</string>
+    <string name="title_activity_main">Gestão Educacional</string>
     <string name="package_name">br.com.tribeiro.gestaodiario</string>
     <string name="custom_url_scheme">br.com.tribeiro.gestaodiario</string>
 </resources>

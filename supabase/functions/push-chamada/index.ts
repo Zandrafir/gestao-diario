@@ -56,6 +56,48 @@ Deno.serve(async (req: Request) => {
 
     const sp = agoraSaoPaulo();
     const diaSemana = sp.getUTCDay(); // 0=dom ... 6=sab
+    const horaMinutoAgora = `${String(sp.getUTCHours()).padStart(2, "0")}:${String(sp.getUTCMinutes()).padStart(2, "0")}`;
+    const dataHojeReminder = sp.toISOString().slice(0, 10);
+
+    // Lembrete fixo diário (todo dia, inclusive fim de semana) — roda ANTES do
+    // corte de dia útil abaixo, porque esse lembrete não depende de aula.
+    // Dedup pelo mesmo push_log (data + hora_inicio + turma), reaproveitando a
+    // constraint única já existente na tabela.
+    if (horaMinutoAgora === "13:10") {
+      const { error: errLogEfape } = await sb
+        .from("push_log")
+        .insert({ data: dataHojeReminder, hora_inicio: "13:10:00", turma: "EFAPE-LEMBRETE" });
+      if (!errLogEfape) {
+        const { data: subsEfape, error: errSubsEfape } = await sb
+          .from("push_subscriptions")
+          .select("endpoint, p256dh, auth");
+        if (errSubsEfape) throw errSubsEfape;
+        const payloadEfape = JSON.stringify({
+          title: "📋 Lembrete",
+          body: "Não Esqueça de Fazer EFAPE",
+          tag: "efape-lembrete",
+        });
+        let enviadosEfape = 0;
+        for (const s of subsEfape ?? []) {
+          try {
+            await webpush.sendNotification(
+              { endpoint: s.endpoint, keys: { p256dh: s.p256dh, auth: s.auth } },
+              payloadEfape,
+            );
+            enviadosEfape++;
+          } catch (e) {
+            const code = (e as { statusCode?: number }).statusCode;
+            if (code === 404 || code === 410) {
+              await sb.from("push_subscriptions").delete().eq("endpoint", s.endpoint);
+            }
+          }
+        }
+        return json({ ok: true, lembrete: "EFAPE", enviados: enviadosEfape });
+      }
+      // Se o insert de dedup falhar (já enviado neste minuto por outro tick),
+      // segue o fluxo normal abaixo em vez de retornar erro.
+    }
+
     if (diaSemana < 1 || diaSemana > 5) {
       return json({ ok: true, skip: "fim de semana", dia: DIAS[diaSemana] });
     }

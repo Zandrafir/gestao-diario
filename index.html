@@ -235,7 +235,7 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 .empty-state p{font-size:14px;line-height:1.6}
 
 /* TOAST FIXO E INVISÍVEL */
-#toast{position:absolute;bottom:100px;left:50%;transform:translateX(-50%) translateY(40px);background:var(--card);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:12px 24px;font-size:13px;z-index:9999;transition:all 0.3s;white-space:nowrap;font-family:'Orbitron',sans-serif;box-shadow:0 10px 30px rgba(0,0,0,0.8); opacity: 0; visibility: hidden; pointer-events: none;}
+#toast{position:absolute;bottom:100px;left:50%;transform:translateX(-50%) translateY(40px);background:var(--card);border:1px solid var(--border2);border-radius:var(--radius-sm);padding:12px 24px;font-size:13px;z-index:9999;transition:all 0.3s;font-family:'Orbitron',sans-serif;box-shadow:0 10px 30px rgba(0,0,0,0.8); opacity: 0; visibility: hidden; display:flex; align-items:center; justify-content:space-between; gap:16px; width:max-content; max-width:90vw;}
 #toast.show{transform:translateX(-50%) translateY(0); opacity: 1; visibility: visible;}
 #toast.success{border-color:var(--green);color:var(--green);box-shadow:0 0 20px var(--green-g)}
 #toast.error{border-color:var(--red);color:var(--red);box-shadow:0 0 20px var(--red-g)}
@@ -827,12 +827,12 @@ function closeModal(id){document.getElementById(id).classList.remove('open');}
 
 // ── TOAST FIX ──────────────────────────────────────────
 let toastTimer;
-function toast(msg,type=''){
-  const t=document.getElementById('toast');
-  t.textContent=msg;
-  t.className=type?'show '+type:'show';
+function toast(msg, type=''){
+  const t = document.getElementById('toast');
+  t.innerHTML = `<span>${msg}</span><span onclick="document.getElementById('toast').className=''" style="cursor:pointer; font-weight:900; font-size:16px; color:inherit;">✕</span>`;
+  t.className = type ? 'show ' + type : 'show';
   clearTimeout(toastTimer);
-  toastTimer = setTimeout(()=>t.className='', 3500);
+  toastTimer = setTimeout(() => { t.className=''; }, 4000);
 }
 function loading(){return'<div class="loading"><div class="spinner"></div>Carregando...</div>';}
 function empty(icon,msg){return`<div class="empty-state"><div class="empty-icon">${icon}</div><p>${msg}</p></div>`;}
@@ -962,20 +962,60 @@ function abrirAulaDetalhe(num, turma, grupo, data) {
   document.getElementById('ta-status-badge').textContent = {pendente:'⬜ Pendente',andamento:'🟡 Em Andamento',concluida:'✅ Concluída'}[s];
   document.getElementById('ta-status-badge').className = 'badge ' + {pendente:'cyan',andamento:'yellow',concluida:'green'}[s];
 
-  // LOGICA GITHUB:
-  const numStr = String(num).padStart(2, '0');
-  const nomeArquivo = grupo === '8ano' ? `Resumo_Aula_${numStr}_8Ano_3Bim.pdf` : `Aula_${numStr}.pdf`;
-
-  document.getElementById('ta-pdf-content').innerHTML = `
-    <div style="font-size:11px;color:var(--text3);margin-bottom:8px">Buscando na raiz do repositório: ${nomeArquivo}</div>
-    <div style="flex:1;width:100%;border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border2);background:#fff">
-      <iframe src="${nomeArquivo}" style="width:100%;height:100%;border:none;"></iframe>
-    </div>
-    <div style="text-align:center;margin-top:12px">
-      <a href="${nomeArquivo}" target="_blank" style="color:var(--neon);font-size:12px;font-family:'Orbitron';text-transform:uppercase;font-weight:700">↗ Abrir Tela Cheia</a>
-    </div>`;
+  carregarPDFAula(grupo, num);
 
   tela.style.display = 'flex';
+}
+
+async function carregarPDFAula(grupo, num) {
+  const pdfArea = document.getElementById('ta-pdf-content');
+  pdfArea.innerHTML = '<div class="loading"><div class="spinner"></div>Buscando PDF no sistema...</div>';
+  try {
+    const bimestreAtual = curAulaCtx?.bimestre || curBimestre;
+    const existentes = await api('pdfs_aula','GET',null,`grupo=eq.${grupo}&numero_aula=eq.${num}&bimestre=eq.${bimestreAtual}`);
+    const registro = existentes[0];
+
+    if (registro?.arquivo_url) {
+      pdfArea.innerHTML = `
+        <div style="width:100%;height:65vh;border-radius:var(--radius-sm);overflow:hidden;border:1px solid var(--border2)"><iframe src="${registro.arquivo_url}" style="width:100%;height:100%;border:none;background:#fff"></iframe></div>
+        <div style="margin-top:12px;text-align:center"><a href="${registro.arquivo_url}" target="_blank" style="color:var(--neon);font-size:12px;font-family:'Orbitron',sans-serif;font-weight:700;text-decoration:none">↗ ABRIR TELA CHEIA</a></div>
+        <div style="margin-top:16px;background:var(--bg2);padding:12px;border-radius:var(--radius-sm);border:1px solid var(--border)">
+          <div style="font-size:11px;color:var(--green);margin-bottom:8px">✅ PDF já enviado. Deseja substituir?</div>
+          <input type="file" id="ta-file" accept=".pdf" class="form-input" style="padding:8px;margin-bottom:8px;font-size:12px"/>
+          <button class="btn-primary" onclick="uploadPDFAula()" style="margin-top:0;padding:10px">🔄 SUBSTITUIR PDF</button>
+        </div>`;
+    } else {
+      pdfArea.innerHTML = `
+        <div style="text-align:center;color:var(--text3);padding:30px"><div style="font-size:48px;margin-bottom:12px">📄</div><div style="font-family:'Orbitron',sans-serif;font-size:12px">Nenhum PDF no sistema</div></div>
+        <div style="margin-top:auto;background:var(--bg2);padding:16px;border-radius:var(--radius-sm);border:1px solid var(--border)">
+          <input type="file" id="ta-file" accept=".pdf" class="form-input" style="padding:10px;margin-bottom:8px"/>
+          <button class="btn-primary" onclick="uploadPDFAula()" style="margin-top:0">▶ SUBIR PDF DA AULA</button>
+        </div>`;
+    }
+  } catch(e) { pdfArea.innerHTML = `<div class="empty-state">⚠️ Erro: ${e.message}</div>`; }
+}
+
+async function uploadPDFAula() {
+  const {grupo, num} = curAulaCtx;
+  const fileInput = document.getElementById('ta-file');
+  const file = fileInput?.files[0];
+  if (!file) { toast('Selecione um PDF', 'error'); return; }
+  toast('Fazendo upload...', '');
+  try {
+    const bimestreAtual = curAulaCtx.bimestre || curBimestre;
+    const pastaStorage = `${grupo==='8ano'?'8Ano':'9Ano'}/${bimestreAtual.charAt(0)}Bimestre/Aula_${String(num).padStart(2,'0')}_${Date.now()}.pdf`;
+    const BUCKET = 'resumos_aulas';
+    let up = await fetch(`${URL}/storage/v1/object/${BUCKET}/${pastaStorage}`, {
+      method:'POST', headers:{ 'apikey':KEY, 'Authorization':'Bearer '+KEY, 'Content-Type':file.type }, body:file
+    });
+    if (!up.ok) throw new Error('Falha no upload para o Storage.');
+    const arquivo_url = `${URL}/storage/v1/object/public/${BUCKET}/${pastaStorage}`;
+    const existing = await api('pdfs_aula','GET',null,`grupo=eq.${grupo}&numero_aula=eq.${num}&bimestre=eq.${bimestreAtual}`);
+    if (existing.length) await api('pdfs_aula','PATCH',{arquivo_url, nome:`Aula ${num}`},`id=eq.${existing[0].id}`);
+    else await api('pdfs_aula','POST',{grupo, numero_aula:num, bimestre:bimestreAtual, arquivo_url, nome:`Aula ${num}`});
+    toast('PDF enviado com sucesso!', 'success');
+    carregarPDFAula(grupo, num);
+  } catch(e) { toast('Erro: '+e.message, 'error'); }
 }
 function fecharTelaAula(){ document.getElementById('tela-aula').style.display='none'; if(curAulaCtx) abrirTurma(curAulaCtx.turma); }
 

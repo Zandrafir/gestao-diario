@@ -252,7 +252,9 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
 select.form-input{appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%2300ffff' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:right 16px center;padding-right:40px}
 
 /* ESTILOS ESPECÍFICOS PARA A NOVA PLANILHA DE NOTAS */
-.ativ-peso-row { display: flex; gap: 8px; margin-bottom: 8px; align-items: center; }
+.ativ-peso-row { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 8px; align-items: center; }
+.ativ-peso-row > select.form-input { min-width: 92px; }
+.ativ-peso-row > input[type="number"] { min-width: 64px; }
 .tabela-notas-container { overflow-x: auto; margin-top: 10px; border-radius: var(--radius-sm); border: 1px solid var(--border); }
 .tabela-notas { width: 100%; border-collapse: collapse; min-width: 400px; font-size: 13px; }
 .tabela-notas th { background: var(--bg3); color: var(--neon); padding: 10px 8px; text-align: left; border-bottom: 1px solid var(--border); font-family: 'Orbitron', sans-serif; font-size: 10px; letter-spacing: 1px; }
@@ -1122,7 +1124,7 @@ async function mudouTurmaNotas(){
   // Carrega configuração de atividades do localStorage
   const cfgStr = localStorage.getItem(`paac_ativ_${turma}_${curBimestre}`);
   if(cfgStr) configAtividades = JSON.parse(cfgStr);
-  else configAtividades = [{id: 'ativ_padrao', nome: 'Nota Bimestral', peso: 100}]; // Padrão legado
+  else configAtividades = [{id: 'ativ_padrao', nome: 'Nota Bimestral', peso: 100, tipo: 'Prova'}]; // Padrão legado
 
   renderConfigAtividades();
 
@@ -1157,8 +1159,12 @@ function renderConfigAtividades(){
   </div>`;
 
   configAtividades.forEach((a, i) => {
+    const tiposSED = ['Prova','Trabalho','Seminário','Tarefa','Pesquisa','Relatório'];
     html += `<div class="ativ-peso-row">
       <input class="form-input" style="flex:2; padding:8px;" placeholder="Nome da Atividade" value="${escaparHtml(a.nome)}" onchange="updateAtivConfig(${i}, 'nome', this.value)"/>
+      <select class="form-input" style="flex:1.4; padding:8px;" onchange="updateAtivConfig(${i}, 'tipo', this.value)">
+        ${tiposSED.map(t=>`<option value="${t}" ${a.tipo===t?'selected':''}>${t}</option>`).join('')}
+      </select>
       <input class="form-input" style="flex:1; padding:8px; text-align:center;" type="number" placeholder="Peso %" value="${a.peso}" onchange="updateAtivConfig(${i}, 'peso', this.value)"/>
       <span style="font-size:14px; font-weight:700; color:var(--text3)">%</span>
       <div onclick="removerAtivConfig(${i})" style="color:var(--red); cursor:pointer; font-size:18px; padding:0 8px;">✕</div>
@@ -1168,7 +1174,7 @@ function renderConfigAtividades(){
 }
 
 function novaAtividadeConfig(){
-  configAtividades.push({ id: 'ativ_' + Date.now(), nome: '', peso: 0 });
+  configAtividades.push({ id: 'ativ_' + Date.now(), nome: '', peso: 0, tipo: 'Prova' });
   salvarEAtualizarAtividades();
 }
 function updateAtivConfig(i, campo, valor){
@@ -1280,7 +1286,7 @@ async function salvarTodasAsNotas(){
           // upsert pela PK virtual (aluno, turma, disciplina, bimestre, avaliacao_nome)
           api('notas_alunos', 'POST', {
             aluno_nome: aluno, turma, disciplina: 'Historia', bimestre: curBimestre,
-            avaliacao_nome: a.nome, nota: parseFloat(cell.nota)
+            avaliacao_nome: a.nome, nota: parseFloat(cell.nota), tipo_avaliacao: a.tipo
           }, 'on_conflict=aluno_nome,turma,disciplina,bimestre,avaliacao_nome&Prefer=resolution=merge-duplicates')
         );
       }

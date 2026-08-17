@@ -1377,6 +1377,19 @@ function loadFrequencia(){
   if(el.value) mudouTurmaOuDataFrequencia();
 }
 
+// CORREÇÃO (isolamento de dados, 17/08/2026): a Frequência lia de
+// alunos_tutoria, mas essa tabela é curada manualmente pra outra finalidade
+// (módulo Tutoria) e passou a ser tratada como protegida/read-only pro
+// extrator da SED - ele só grava em alunos_sed. A Frequência agora lê
+// direto de alunos_sed (turma no formato BRUTO da SED, ex: "8° Ano E
+// Integral 7H T1 Anual") e normaliza no client com a MESMA regra usada na
+// extensão (extrairTurmaDoTexto em sed-injetor.js) pra comparar com o valor
+// já normalizado do dropdown (ex: "8ºE").
+function normalizarTurmaSED(texto){
+  const m = (texto || '').normalize('NFC').match(/(\d)\s*[°º]?\s*ano\s+([a-z])\b/i);
+  return m ? `${m[1]}º${m[2].toUpperCase()}` : null;
+}
+
 async function mudouTurmaOuDataFrequencia(){
   const turma = document.getElementById('fr-turma').value;
   const data = document.getElementById('fr-data').value;
@@ -1385,9 +1398,17 @@ async function mudouTurmaOuDataFrequencia(){
   document.getElementById('fr-lista').innerHTML = loading();
   document.getElementById('fr-contagem').textContent = '';
   try {
-    const alunos = await api('alunos_tutoria','GET',null,`turma=eq.${turma}&order=nome.asc&select=nome`);
+    const linhas = await api('alunos_sed','GET',null,'select=nome,turma&order=nome.asc');
+    const vistos = new Set();
+    const alunos = [];
+    linhas.forEach(r => {
+      if(normalizarTurmaSED(r.turma) === turma && !vistos.has(r.nome)){
+        vistos.add(r.nome);
+        alunos.push({ nome: r.nome });
+      }
+    });
     if(!alunos.length){
-      document.getElementById('fr-lista').innerHTML = empty('👥','Nenhum aluno cadastrado para esta turma em alunos_tutoria.');
+      document.getElementById('fr-lista').innerHTML = empty('👥','Nenhum aluno cadastrado para esta turma em alunos_sed. Use o "Extrator de Alunos" (Sincronizar Todas as Turmas) na extensão.');
       return;
     }
 

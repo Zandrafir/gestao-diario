@@ -1415,8 +1415,24 @@ async function mudouTurmaOuDataFrequencia(){
     // Se já existe chamada salva pra essa turma+data, pré-carrega o estado
     // real em vez do padrão "todos presentes" (evita perder o que já foi
     // lançado se o professor reabrir a tela).
+    //
+    // CORREÇÃO (bug real reportado ao vivo: aluno sempre voltava como
+    // "presente" mesmo com falta já salva): api() sempre anexa
+    // "order=created_at.desc" em qualquer GET - mas frequencia_alunos NÃO
+    // TEM coluna created_at (só updated_at), então essa consulta sempre
+    // dava 400 ("column does not exist"), caía no catch e existentes ficava
+    // [] pra sempre. O UPSERT em salvarFrequencia() sempre funcionou (usa
+    // fetch cru, não api()) - o dado estava certinho no banco, só nunca
+    // era relido. Corrigido usando fetch cru aqui também, sem o order
+    // quebrado.
     let existentes = [];
-    try { existentes = await api('frequencia_alunos','GET',null,`turma=eq.${turma}&data_aula=eq.${data}`); } catch(e) { existentes = []; }
+    try {
+      const baseUrl = URL.replace(/\/rest\/v1\/?$/, '').replace(/\/$/, '');
+      const r = await fetch(`${baseUrl}/rest/v1/frequencia_alunos?turma=eq.${encodeURIComponent(turma)}&data_aula=eq.${data}`, {
+        headers: { apikey: SUPABASE_KEY, Authorization: 'Bearer ' + (USER_TOKEN || KEY) }
+      });
+      existentes = r.ok ? await r.json() : [];
+    } catch(e) { existentes = []; }
     const mapExistente = {};
     existentes.forEach(r => { mapExistente[r.aluno_nome] = r.presente; });
 
